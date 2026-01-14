@@ -22,11 +22,11 @@ type ExportItem = NonNullable<CurrentExport['items']>[number]
 export class ImportService {
   private entries!: Entry[]
 
-  async parse(file: File | undefined) {
-    if (!file) {
+  async parse(blob: Blob | undefined) {
+    if (!blob) {
       return
     }
-    const zipReader = new ZipReader(new BlobReader(file))
+    const zipReader = new ZipReader(new BlobReader(blob))
     this.entries = await zipReader.getEntries()
 
     const rootEntry = this.findEntry(ROOT_FILE)

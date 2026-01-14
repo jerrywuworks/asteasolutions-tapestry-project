@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { IconButton } from 'tapestry-core-client/src/components/lib/buttons'
+import { Button, IconButton } from 'tapestry-core-client/src/components/lib/buttons'
 import { ShortcutLabel } from 'tapestry-core-client/src/components/lib/shortcut-label'
 import { Toolbar } from 'tapestry-core-client/src/components/lib/toolbar'
 import { useViewportObstruction } from 'tapestry-core-client/src/components/tapestry/hooks/use-viewport-obstruction'
@@ -11,7 +11,11 @@ import styles from './styles.module.css'
 import { SvgIcon } from 'tapestry-core-client/src/components/lib/svg-icon'
 import Logo from 'tapestry-core-client/src/assets/icons/logo.svg?react'
 
-export function TopToolbar() {
+interface TopToolbarProps {
+  onBack: () => unknown
+}
+
+export function TopToolbar({ onBack }: TopToolbarProps) {
   const obstruction = useViewportObstruction({ clear: { top: true, left: true } })
   const [viewingInfo, setViewingInfo] = useState(false)
   const tapestry = useTapestryData(['title', 'description', 'thumbnail', 'createdAt'])
@@ -24,11 +28,16 @@ export function TopToolbar() {
         items={[
           {
             element: (
-              <div className={styles.logoWrapper}>
+              <Button
+                className={styles.logoWrapper}
+                variant="clear"
+                aria-label="Go back"
+                onClick={onBack}
+              >
                 <SvgIcon Icon={Logo} size={28} className={styles.logo} />
-              </div>
+              </Button>
             ),
-            tooltip: { side: 'bottom', children: 'Go to tapestries', offset: -8 },
+            tooltip: { side: 'bottom', children: 'Go back', offset: -8 },
           },
           {
             element: (

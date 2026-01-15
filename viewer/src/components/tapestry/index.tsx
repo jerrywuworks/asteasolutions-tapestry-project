@@ -80,13 +80,15 @@ export function Tapestry({ onBack }: TapestryProps) {
   useFocusedElement()
 
   return (
-    <div ref={sceneRef} className="scene-container">
-      <div ref={pixiContainerRef} className="pixi-container" />
-      <TapestryCanvas classes={{ root: 'dom-container' }} />
-      <ViewportScrollbars />
+    <>
+      <div ref={sceneRef} className="scene-container">
+        <div ref={pixiContainerRef} className="pixi-container" />
+        <TapestryCanvas classes={{ root: 'dom-container' }} />
+        <ViewportScrollbars />
+      </div>
       <TopToolbar onBack={onBack} />
       <SidePane />
       <ZoomToolbar className="zoom-toolbar" />
-    </div>
+    </>
   )
 }

@@ -1,13 +1,13 @@
 import styles from './styles.module.css'
-import { computeRestrictedScale, isSingleGroupSelected } from '../../../view-model/utils'
+import { computeRestrictedScale } from '../../../view-model/utils'
 import clsx from 'clsx'
 import { idMapToArray } from 'tapestry-core/src/utils'
 import { DOM_CONTAINER_CLASS } from '../../../stage/utils'
 import { Rectangle } from 'tapestry-core/src/lib/geometry'
 import { PropsWithChildren, ReactNode } from 'react'
-import { GroupViewModel } from '../../../view-model'
 import { PropsWithStyle } from '../../lib'
 import { useTapestryConfig } from '..'
+import { useSingleGroupSelection } from '../../lib/hooks/use-single-group-selection'
 
 export interface MultiselectionProps extends PropsWithStyle<PropsWithChildren> {
   bounds: Rectangle
@@ -16,18 +16,13 @@ export interface MultiselectionProps extends PropsWithStyle<PropsWithChildren> {
 
 export function Multiselection({ bounds, halo, style, className, children }: MultiselectionProps) {
   const { useStoreData } = useTapestryConfig()
-  const { items, selection, interactiveElement, groups, viewport } = useStoreData([
+  const { items, interactiveElement, viewport } = useStoreData([
     'items',
-    'selection',
     'interactiveElement',
-    'groups',
     'viewport',
   ])
 
-  let selectedGroup: GroupViewModel | undefined
-  if (isSingleGroupSelected(selection)) {
-    selectedGroup = groups[[...selection.groupIds][0]]
-  }
+  const selectedGroup = useSingleGroupSelection()
 
   const { top, left, width, height } = bounds
 

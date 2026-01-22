@@ -1,25 +1,21 @@
 import { Multiselection } from '.'
 import { useTapestryConfig } from '..'
-import { GroupViewModel } from '../../../view-model'
 import {
   getBoundingRectangle,
   getSelectionItems,
-  isSingleGroupSelected,
   MULTISELECT_RECTANGLE_PADDING,
 } from '../../../view-model/utils'
 import { useMultiselectMenu } from '../../lib/hooks/use-multiselect-menu'
+import { useSingleGroupSelection } from '../../lib/hooks/use-single-group-selection'
 import { ElementToolbar } from '../element-toolbar'
 
 export function DefaultMultiselection() {
   const { useStoreData } = useTapestryConfig()
-  const { items, selection, groups } = useStoreData(['items', 'selection', 'groups'])
+  const { items, selection } = useStoreData(['items', 'selection'])
   const selectionItems = getSelectionItems({ items, selection })
   const selectionBounds = getBoundingRectangle(selectionItems).expand(MULTISELECT_RECTANGLE_PADDING)
+  const selectedGroup = useSingleGroupSelection()
 
-  let selectedGroup: GroupViewModel | undefined
-  if (isSingleGroupSelected(selection)) {
-    selectedGroup = groups[[...selection.groupIds][0]]
-  }
   const toolbar = useMultiselectMenu(
     selectedGroup ? ['focus', 'separator', 'presentation'] : ['focus'],
     selectedGroup?.dto.id,

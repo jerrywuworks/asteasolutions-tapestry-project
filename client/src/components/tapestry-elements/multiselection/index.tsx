@@ -1,29 +1,26 @@
 import { MultiselectMenu } from '../multiselect-menu'
 import { useTapestryData } from '../../../pages/tapestry/tapestry-providers'
-import { getSelectionItems, isSingleGroupSelected } from 'tapestry-core-client/src/view-model/utils'
+import { getSelectionItems } from 'tapestry-core-client/src/view-model/utils'
+import { useSingleGroupSelection } from 'tapestry-core-client/src/components/lib/hooks/use-single-group-selection'
 import { Multiselection as BaseMultiselection } from 'tapestry-core-client/src/components/tapestry/multiselection'
 import { getMultiselectRectangle } from '../../../pages/tapestry/view-model/utils'
 import { ResizeHandles } from '../resize-handles'
 import { EditableGroupViewModel } from '../../../pages/tapestry/view-model'
 
 export function Multiselection() {
-  const { items, selection, interactionMode, selectionResizeState, interactiveElement, groups } =
+  const { items, selection, interactionMode, selectionResizeState, interactiveElement } =
     useTapestryData([
       'items',
       'selection',
       'interactionMode',
       'selectionResizeState',
       'interactiveElement',
-      'groups',
     ])
   const selectionItems = getSelectionItems({ items, selection })
   const selectionBounds = getMultiselectRectangle(selectionItems, selectionResizeState)
   const isEditMode = interactionMode === 'edit'
 
-  let selectedGroup: EditableGroupViewModel | undefined
-  if (isSingleGroupSelected(selection)) {
-    selectedGroup = groups[[...selection.groupIds][0]]
-  }
+  const selectedGroup = useSingleGroupSelection<EditableGroupViewModel>()
 
   return (
     <BaseMultiselection

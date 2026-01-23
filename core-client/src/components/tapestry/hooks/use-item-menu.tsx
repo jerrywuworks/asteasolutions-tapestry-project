@@ -33,13 +33,10 @@ export function useItemMenu<const M extends string>(
   const focusElement = useFocusElement()
   const [displayInfo, setDisplayInfo] = useState(false)
 
-  useKeyboardShortcuts(
-    {
-      ...(menu.includes('info') ? { 'meta + KeyI': showInfo } : {}),
-      Escape: () => dispatch(deselectAll()),
-    },
-    [],
-  )
+  useKeyboardShortcuts({
+    ...(menu.includes('info') ? { 'meta + KeyI': showInfo } : {}),
+    Escape: () => dispatch(deselectAll()),
+  })
 
   function showInfo() {
     setDisplayInfo(true)

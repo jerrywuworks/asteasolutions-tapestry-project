@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 
 import { useFocusedElement } from 'tapestry-core-client/src/components/tapestry/hooks/use-focus-element'
+import { usePresentationShortcuts } from 'tapestry-core-client/src/components/lib/hooks/use-presentation-shortcuts'
 import { useStageInit } from 'tapestry-core-client/src/components/tapestry/hooks/use-stage-init'
 import { TapestryCanvas } from 'tapestry-core-client/src/components/tapestry/tapestry-canvas'
 import { ViewportScrollbars } from 'tapestry-core-client/src/components/tapestry/viewport-scrollbars'
@@ -78,6 +79,7 @@ export function Tapestry({ onBack }: TapestryProps) {
   })
 
   useFocusedElement()
+  usePresentationShortcuts()
 
   return (
     <div ref={sceneRef} className="scene-container">

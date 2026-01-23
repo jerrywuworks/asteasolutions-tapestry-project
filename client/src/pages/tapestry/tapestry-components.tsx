@@ -1,11 +1,13 @@
+import { PropsWithStyle } from 'tapestry-core-client/src/components/lib'
+import { usePresentationShortcuts } from 'tapestry-core-client/src/components/lib/hooks/use-presentation-shortcuts'
 import { TapestryCanvas } from 'tapestry-core-client/src/components/tapestry/tapestry-canvas'
 import { useTapestryData } from './tapestry-providers'
-import { PropsWithStyle } from 'tapestry-core-client/src/components/lib'
 
 export function TapestryEditorCanvas({ className }: PropsWithStyle) {
   const interactionMode = useTapestryData('interactionMode')
+  const isView = interactionMode === 'view'
 
-  return (
-    <TapestryCanvas classes={{ root: className }} orderByPosition={interactionMode === 'view'} />
-  )
+  usePresentationShortcuts(isView)
+
+  return <TapestryCanvas classes={{ root: className }} orderByPosition={isView} />
 }

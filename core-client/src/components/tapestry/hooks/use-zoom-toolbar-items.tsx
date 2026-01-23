@@ -49,30 +49,27 @@ export function useZoomToolbarItems<
   const focusElement = useFocusElement()
 
   const store = useStore()
-  useKeyboardShortcuts(
-    {
-      ...(menu.includes('zoom-out') ? { Minus: (e) => store.dispatch(zoomOut(e.repeat)) } : {}),
-      ...(menu.includes('zoom-in') ? { Equal: (e) => store.dispatch(zoomIn(e.repeat)) } : {}),
-      ...(menu.includes('zoom-to-fit')
-        ? {
-            KeyF: () => {
-              // Do not call this handler if there is an active element, since its focus button should be triggered.
-              // TODO: Find a better way to handle this (perhaps using the capture phase only in the item's toolbar)
-              if (
-                store.get('interactiveElement') ||
-                isMultiselection(store.get('selection')) ||
-                !hasItems
-              ) {
-                return
-              }
+  useKeyboardShortcuts({
+    ...(menu.includes('zoom-out') ? { Minus: (e) => store.dispatch(zoomOut(e.repeat)) } : {}),
+    ...(menu.includes('zoom-in') ? { Equal: (e) => store.dispatch(zoomIn(e.repeat)) } : {}),
+    ...(menu.includes('zoom-to-fit')
+      ? {
+          KeyF: () => {
+            // Do not call this handler if there is an active element, since its focus button should be triggered.
+            // TODO: Find a better way to handle this (perhaps using the capture phase only in the item's toolbar)
+            if (
+              store.get('interactiveElement') ||
+              isMultiselection(store.get('selection')) ||
+              !hasItems
+            ) {
+              return
+            }
 
-              focusElement('all')
-            },
-          }
-        : {}),
-    },
-    [],
-  )
+            focusElement('all')
+          },
+        }
+      : {}),
+  })
 
   const [selectedSubmenu, selectSubmenu, closeSubmenu] = useSingleChoice<MoreSubmenu>()
 

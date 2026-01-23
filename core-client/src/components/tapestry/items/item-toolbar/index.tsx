@@ -1,8 +1,8 @@
-import { MaybeMenuItem } from '../../../lib/toolbar/index'
 import { Rectangle } from 'tapestry-core/src/lib/geometry'
-import { useItemMenu } from '../../hooks/use-item-menu'
-import { ElementToolbar, ElementToolbarProps } from '../../element-toolbar'
 import { useTapestryConfig } from '../..'
+import { MaybeMenuItem } from '../../../lib/toolbar/index'
+import { ElementToolbar, ElementToolbarProps } from '../../element-toolbar'
+import { useItemMenu } from '../../hooks/use-item-menu'
 import { ACTIVE_ITEM_BORDER_WIDTH } from '../tapestry-item'
 
 export type ItemToolbarProps = Omit<ElementToolbarProps, 'isOpen' | 'items' | 'elementBounds'> & {

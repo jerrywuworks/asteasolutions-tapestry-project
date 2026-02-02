@@ -21,13 +21,12 @@ export const Rel = memo(({ id }: RelProps) => {
   const {
     interactiveElement,
     items,
-    viewport,
     theme: themeName,
-  } = useTapestryData(['interactiveElement', 'items', 'theme', 'viewport'])
+  } = useTapestryData(['interactiveElement', 'items', 'theme'])
   const theme = THEMES[themeName]
   const isActive = rel.dto.id === interactiveElement?.modelId
 
-  const curve = computeRelCurvePoints(rel, viewport, items)
+  const curve = computeRelCurvePoints(rel, items)
   const bounds = getBounds(rel.dto, items)
 
   return (

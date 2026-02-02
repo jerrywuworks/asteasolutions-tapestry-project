@@ -2,7 +2,7 @@ import { Graphics, Point, StrokeStyle } from 'pixi.js'
 import { TapestryElementRenderer } from './tapestry-element-renderer'
 import { mul, Point as TapestryPoint, translate, Vector } from 'tapestry-core/src/lib/geometry'
 import { Store } from '../../lib/store/index'
-import { IdMap, idMapToArray } from 'tapestry-core/src/utils'
+import { IdMap } from 'tapestry-core/src/utils'
 import { isHoveredElement } from '../utils'
 import {
   computeRelCurvePoints,
@@ -10,9 +10,8 @@ import {
   REL_ARROWHEAD_SIZES,
   REL_LINE_WIDTHS,
 } from '../../view-model/rel-geometry'
-import { ItemViewModel, RelViewModel, TapestryViewModel, Viewport } from '../../view-model'
+import { ItemViewModel, RelViewModel, TapestryViewModel } from '../../view-model'
 import { TapestryStage } from '..'
-import { computeRestrictedScale } from '../../view-model/utils'
 
 const DEFAULT_REL_Z_INDEX = 0
 const LINE_SMOOTHNESS = 0.7
@@ -63,12 +62,25 @@ export class RelRenderer<R extends RelViewModel> extends TapestryElementRenderer
     this.pixiContainer.addChild(this.toArrowhead)
   }
 
-  protected computeRelCurvePoints(viewModel: R, viewport: Viewport, items: IdMap<ItemViewModel>) {
-    return computeRelCurvePoints(viewModel, viewport, items)
+  protected computeRelCurvePoints(viewModel: R, items: IdMap<ItemViewModel>) {
+    return computeRelCurvePoints(viewModel, items)
   }
 
   protected renderInternal(viewModel: R) {
-    const res = super.renderInternal(viewModel)
+    super.renderInternal(viewModel)
+
+    const { id, from, to, color, weight } = viewModel.dto
+    const isActive = id === this.store.get('interactiveElement.modelId')
+    const pointerInteractionTarget = this.store.get('pointerInteraction.target')
+    const isHighlighted =
+      isActive ||
+      (isHoveredElement(pointerInteractionTarget) && pointerInteractionTarget.modelId === id)
+
+    if (viewModel === this.lastRenderedModel) {
+      // No need to redraw the paths, just update the highlights, if necessary
+      this.lineHighlightFrom.alpha = this.lineHighlightTo.alpha = isHighlighted ? 0.1 : 0
+      return
+    }
 
     this.line.clear()
     this.lineHighlightFrom.clear()
@@ -76,39 +88,27 @@ export class RelRenderer<R extends RelViewModel> extends TapestryElementRenderer
     this.fromArrowhead.clear()
     this.toArrowhead.clear()
 
-    const { viewport, items } = this.store.get()
-    const curve = this.computeRelCurvePoints(viewModel, viewport, items)
-    const { id, from, to, color, weight } = viewModel.dto
+    const { items } = this.store.get()
+    const curve = this.computeRelCurvePoints(viewModel, items)
 
-    const arrowheadScale =
-      computeRestrictedScale(viewport, idMapToArray(items), {
-        min: 4 / REL_ARROWHEAD_SIZES[weight],
-      }) / viewport.transform.scale
-    const arrowHeadSize = REL_ARROWHEAD_SIZES[weight] * arrowheadScale
-    const lineStrokeScale =
-      computeRestrictedScale(viewport, idMapToArray(items)) / viewport.transform.scale
-    const lineStrokeWidth = REL_LINE_WIDTHS[weight] * lineStrokeScale
+    const arrowHeadSize = REL_ARROWHEAD_SIZES[weight]
+    const lineStrokeWidth = REL_LINE_WIDTHS[weight]
 
     // Instead of a single cubic Bezier curve, draw two quadratic Bezier curves joined in the middle.
     // This way we will have two separate segments of the curve and we will be able to handle
     // user interactions with them more easily.
     drawCurve(this.line, curve).stroke({ width: lineStrokeWidth, color, cap: 'square' })
 
-    const isActive = id === this.store.get('interactiveElement.modelId')
-    const pointerInteractionTarget = this.store.get('pointerInteraction.target')
     const highlightStrokeStyle: StrokeStyle = {
       width: 4 * lineStrokeWidth,
-      color:
-        isActive ||
-        (isHoveredElement(pointerInteractionTarget) && pointerInteractionTarget.modelId === id)
-          ? color
-          : 'transparent',
+      color: 'white',
       cap: 'butt',
-      alpha: 0.1,
     }
 
     drawCurve(this.lineHighlightFrom, curve, 'head').stroke(highlightStrokeStyle)
     drawCurve(this.lineHighlightTo, curve, 'tail').stroke(highlightStrokeStyle)
+    this.lineHighlightFrom.tint = this.lineHighlightTo.tint = color
+    this.lineHighlightFrom.alpha = this.lineHighlightTo.alpha = isHighlighted ? 0.1 : 0
 
     if (from.arrowhead === 'arrow') {
       this.drawArrowhead(
@@ -131,8 +131,6 @@ export class RelRenderer<R extends RelViewModel> extends TapestryElementRenderer
         lineStrokeWidth,
       )
     }
-
-    return res
   }
 
   private drawArrowhead(

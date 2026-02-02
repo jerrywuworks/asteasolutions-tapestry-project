@@ -5,7 +5,7 @@ import {
 } from 'tapestry-core-client/src/view-model/rel-geometry'
 import { RelRenderer } from 'tapestry-core-client/src/stage/renderer/rel-renderer'
 import { EditableRelViewModel, TapestryEditorStore } from '../../pages/tapestry/view-model'
-import { ItemViewModel, Viewport } from 'tapestry-core-client/src/view-model'
+import { ItemViewModel } from 'tapestry-core-client/src/view-model'
 import { IdMap } from 'tapestry-core/src/utils'
 import { TapestryStage } from 'tapestry-core-client/src/stage'
 import { RelEndpoint } from 'tapestry-core/src/data-format/schemas/rel'
@@ -19,14 +19,9 @@ export class EditorRelRenderer extends RelRenderer<EditableRelViewModel> {
     super(editorStore.as('base'), stage, viewModel)
   }
 
-  protected computeRelCurvePoints(
-    viewModel: EditableRelViewModel,
-    viewport: Viewport,
-    items: IdMap<ItemViewModel>,
-  ) {
+  protected computeRelCurvePoints(viewModel: EditableRelViewModel, items: IdMap<ItemViewModel>) {
     return computeRelCurvePoints<EditableRelViewModel>(
       viewModel,
-      viewport,
       items,
       (relViewModel, endpoint, items) => {
         if (

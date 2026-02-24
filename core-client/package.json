@@ -19,7 +19,7 @@
     "vite-css-modules": "^1.11.1"
   },
   "dependencies": {
-    "@asteasolutions/epub-reader": "^1.0.0",
+    "@asteasolutions/epub-reader": "^1.0.2",
     "@tiptap/extension-blockquote": "^2.24.2",
     "@tiptap/extension-bold": "^2.24.2",
     "@tiptap/extension-bullet-list": "^2.24.2",

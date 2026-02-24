@@ -73,13 +73,16 @@ export function BookItemViewer({ id, isZipURL }: BookItemViewerProps) {
 
   useAsync(
     async (_, cleanup) => {
+      let cancelled = false
+      cleanup(() => (cancelled = true))
+
       const loader = await createLoader(epub, { isZipURL })
       let readerAPI: Reader | undefined
 
       Book.open(loader).subscribe({
         next: (book) => {
           const container = containerRef.current
-          if (!container) {
+          if (!container || cancelled) {
             return
           }
           const reader = new Reader(container, book)

@@ -25,7 +25,8 @@
     "worker:start": "docker compose -f ./docker-compose.local.yml --env-file ./server/.env up -d --build worker",
     "worker:logs": "docker compose -f ./docker-compose.local.yml logs -f worker",
     "vault:start": "docker compose -f ./docker-compose.local.yml --env-file=./server/.env up -d --build vault",
-    "vault:logs": "docker compose -f ./docker-compose.local.yml logs -f vault"
+    "vault:logs": "docker compose -f ./docker-compose.local.yml logs -f vault",
+    "local": "npm run db:start && npm run redis:start && npm run vault:start"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

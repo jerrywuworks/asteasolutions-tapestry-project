@@ -6,11 +6,13 @@ import {
   AudioItem,
   BookItem,
   ImageItem,
+  Item,
   PdfItem,
   TextItem,
   VideoItem,
   WebpageItem,
 } from 'tapestry-core/src/data-format/schemas/item.js'
+import { Size } from 'tapestry-core/src/data-format/schemas/common.js'
 
 interface BaseItemDto extends BaseResourceDto {
   tapestry?: TapestryDto | null
@@ -21,28 +23,33 @@ interface BaseMediaItemDto extends BaseItemDto {
   internallyHosted: boolean
 }
 
-type ItemReadonlyProps = keyof BaseItemDto
+interface ThumbnailUpdate {
+  thumbnail?: {
+    source: string
+    size: Size
+  } | null
+}
+
+type ItemReadonlyProps = keyof BaseItemDto | 'thumbnail'
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 type NonNullishType = { type: {} }
 
+type CreateDto<I extends Item & BaseItemDto> = Omit<I, Exclude<ItemReadonlyProps, 'tapestryId'>>
+type CreateInTapestryDto<I extends Item & BaseItemDto> = Omit<I, Exclude<ItemReadonlyProps, 'id'>>
+type UpdateDto<I extends Item & BaseItemDto> = Omit<Partial<I>, ItemReadonlyProps> &
+  NonNullishType &
+  ThumbnailUpdate
+
 export interface TextItemDto extends TextItem, BaseItemDto {}
 
-export type TextItemCreateDto = Omit<TextItemDto, Exclude<ItemReadonlyProps, 'tapestryId'>>
-export type TextItemCreateInTapestryDto = Omit<TextItemDto, Exclude<ItemReadonlyProps, 'id'>>
-export type TextItemUpdateDto = Omit<Partial<TextItemDto>, ItemReadonlyProps> & NonNullishType
+export type TextItemCreateDto = CreateDto<TextItemDto>
+export type TextItemCreateInTapestryDto = CreateInTapestryDto<TextItemDto>
+export type TextItemUpdateDto = UpdateDto<TextItemDto>
 
 export interface ActionButtonItemDto extends ActionButtonItem, BaseItemDto {}
-
-export type ActionButtonItemCreateDto = Omit<
-  ActionButtonItemDto,
-  Exclude<ItemReadonlyProps, 'tapestryId'>
->
-export type ActionButtonItemCreateInTapestryDto = Omit<
-  ActionButtonItemDto,
-  Exclude<ItemReadonlyProps, 'id'>
->
-export type ActionButtonItemUpdateDto = Omit<Partial<ActionButtonItemDto>, ItemReadonlyProps> &
-  NonNullishType
+export type ActionButtonItemCreateDto = CreateDto<ActionButtonItemDto>
+export type ActionButtonItemCreateInTapestryDto = CreateInTapestryDto<ActionButtonItemDto>
+export type ActionButtonItemUpdateDto = UpdateDto<ActionButtonItemDto>
 
 export interface AudioItemDto extends AudioItem, BaseMediaItemDto {}
 export interface VideoItemDto extends VideoItem, BaseMediaItemDto {}
@@ -59,7 +66,7 @@ export type MediaItemDto =
   | VideoItemDto
   | WebpageItemDto
 
-type MediaItemReadonlyProps = ItemReadonlyProps | 'thumbnail' | 'internallyHosted'
+type MediaItemReadonlyProps = ItemReadonlyProps | 'internallyHosted'
 
 type BaseMediaItemWriteProps = MediaItemDto & {
   skipSourceResolution?: boolean
@@ -81,7 +88,8 @@ export type MediaItemUpdateDto = DistributiveOmit<
   Partial<BaseMediaItemWriteProps>,
   MediaItemReadonlyProps
 > &
-  NonNullishType
+  NonNullishType &
+  ThumbnailUpdate
 
 export type ItemDto = TextItemDto | ActionButtonItemDto | MediaItemDto
 export type ItemCreateDto = TextItemCreateDto | ActionButtonItemCreateDto | MediaItemCreateDto

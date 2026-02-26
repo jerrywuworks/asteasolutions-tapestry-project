@@ -3,11 +3,8 @@ import { ReactNode } from 'react'
 import { useObservable } from 'tapestry-core-client/src/components/lib/hooks/use-observable'
 import { TapestryItem as BaseTapestryItem } from 'tapestry-core-client/src/components/tapestry/items/tapestry-item'
 import { THEMES } from 'tapestry-core-client/src/theme/themes'
-import {
-  computeRestrictedScale,
-  positionAtViewport,
-} from 'tapestry-core-client/src/view-model/utils'
-import { ORIGIN, Rectangle, scaleSize, Size } from 'tapestry-core/src/lib/geometry'
+import { computeRestrictedScale } from 'tapestry-core-client/src/view-model/utils'
+import { Size } from 'tapestry-core/src/lib/geometry'
 import { idMapToArray } from 'tapestry-core/src/utils'
 import { useDispatch, useTapestryData } from '../../../../pages/tapestry/tapestry-providers'
 import {
@@ -34,19 +31,11 @@ export function TapestryItem({ id, children, halo }: TapestryItemProps) {
     interactiveElement,
     interactionMode,
     theme: themeName,
-    viewport,
   } = useTapestryData(['interactiveElement', 'interactionMode', 'theme', 'viewport'])
   const dispatch = useDispatch()
   const isEditMode = interactionMode === 'edit'
 
   const isContentInteractive = id === interactiveElement?.modelId
-
-  const viewportRect = new Rectangle(
-    positionAtViewport(viewport, ORIGIN),
-    scaleSize(viewport.size, 1 / viewport.transform.scale),
-  )
-
-  const isVisible = viewportRect.intersects(new Rectangle(dto))
 
   // @ts-expect-error TS wants us to check for a media item
   const item = useObservable(itemUpload).find((i) => i.objectUrl === dto.source)
@@ -59,7 +48,6 @@ export function TapestryItem({ id, children, halo }: TapestryItemProps) {
         root: styles.root,
         hitArea: styles.hitArea,
       }}
-      style={!isVisible ? { display: 'none' } : undefined}
       title={
         <>
           <span>{dto.title}</span>

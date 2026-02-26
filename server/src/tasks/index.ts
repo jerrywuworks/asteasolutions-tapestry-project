@@ -13,8 +13,9 @@ export interface JobTypeMap {
   'generate-tapestry-thumbnail': {
     tapestryId: string
   }
-  'generate-item-thumbnail': {
+  'process-item-thumbnail': {
     itemId: string
+    forceRegenerate: boolean
   }
   's3-cleanup': void
   'create-tapestry': {

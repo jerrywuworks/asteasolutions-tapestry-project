@@ -1,4 +1,3 @@
-import clsx from 'clsx'
 import { clamp, times } from 'lodash-es'
 import {
   Ref,
@@ -27,6 +26,7 @@ import { LoadingSpinner } from '../../../lib/loading-spinner/index'
 import { ItemPlaceholder } from '../../item-placeholder'
 import styles from './styles.module.css'
 import { useStartPage } from '../../hooks/use-start-page'
+import { getPrimaryThumbnail } from '../../../../view-model/utils'
 
 const PDF_OPTIONS: Options = {
   disableStream: true,
@@ -131,7 +131,7 @@ export function PdfItemViewer({ id, onDocumentLoaded, onPageChanged, apiRef }: P
         <Document
           file={dto.source}
           onLoadSuccess={setPDFDocument}
-          className={clsx(styles.root, { [styles.interactive]: isInteractive })}
+          className={styles.root}
           onItemClick={(item) => navigateToPage(item.pageIndex)}
           inputRef={documentRef}
           options={PDF_OPTIONS}
@@ -168,7 +168,7 @@ export function PdfItemViewer({ id, onDocumentLoaded, onPageChanged, apiRef }: P
               thumbnail: styles.thumbnail,
             }}
             icon="picture_as_pdf"
-            thumbnailSrc={dto.customThumbnail ?? dto.thumbnail?.source}
+            thumbnailSrc={getPrimaryThumbnail(dto)}
             thumbnailOverlay={<Icon icon="picture_as_pdf" className={styles.overlay} />}
           >
             Click to load

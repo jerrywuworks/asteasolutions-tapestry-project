@@ -1,10 +1,6 @@
 .root {
   height: 100%;
-
-  &.interactive {
-    /* "Optimization" for Safari's layer drawing */
-    overflow: auto;
-  }
+  overflow: auto;
 
   /* Parent container for the error and loading components */
   /* stylelint-disable-next-line selector-class-pattern */

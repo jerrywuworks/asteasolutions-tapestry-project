@@ -10,6 +10,7 @@ import { PresentationStep } from 'tapestry-core/src/data-format/schemas/presenta
 import { Rel } from 'tapestry-core/src/data-format/schemas/rel.js'
 import { Tapestry } from 'tapestry-core/src/data-format/schemas/tapestry.js'
 import { IdMap } from 'tapestry-core/src/utils.js'
+import { Id } from 'tapestry-core/src/data-format/schemas/common'
 
 export const MAX_SCALE = 4
 export const MIN_RESTRICTED_SCALE = 0.5
@@ -34,7 +35,12 @@ export interface PointerSelection {
 
 export interface TapestryElementRef {
   readonly modelType: 'item' | 'rel'
-  readonly modelId: string
+  readonly modelId: Id
+}
+
+export interface GroupModelRef {
+  readonly modelType: 'group'
+  readonly modelId: Id
 }
 
 interface BaseHoverTarget {
@@ -70,6 +76,7 @@ export interface PointerInteraction {
 
 export interface ItemViewModel<I extends Item = Item> {
   readonly dto: I
+  readonly snapshotId?: string | null
   readonly hasBeenActive?: boolean
 }
 
@@ -113,7 +120,7 @@ export interface TapestryViewModel<
   readonly pointerSelection?: PointerSelection | null
   readonly interactiveElement?: TapestryElementRef | null
   readonly snackbarData?: SnackbarData
-  readonly delayItemLoad?: boolean
+  readonly disableOptimizations?: boolean
   readonly outlinedItemId?: string
   readonly searchTerm?: string | null
   readonly items: Readonly<IdMap<I>>

@@ -24,7 +24,11 @@ export function ItemPlaceholder({
     <div style={style} className={clsx(styles.root, classes?.root)}>
       {thumbnailSrc ? (
         <>
-          <img src={thumbnailSrc} className={clsx(styles.thumbnail, classes?.thumbnail)} />
+          <img
+            src={thumbnailSrc}
+            crossOrigin="anonymous"
+            className={clsx(styles.thumbnail, classes?.thumbnail)}
+          />
           {thumbnailOverlay}
         </>
       ) : (

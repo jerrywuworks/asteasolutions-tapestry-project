@@ -7,6 +7,10 @@ import { usePropRef } from '../../lib/hooks/use-prop-ref'
 import { TapestryViewModel } from '../../../view-model'
 import { GestureDetectorOptions } from '../../../stage/gesture-detector'
 
+type PixiApps<S extends string> =
+  | [{ name: 'tapestry'; app: Application }]
+  | [{ name: 'tapestry'; app: Application }, { name: S; app: Application }]
+
 export function useStageInit<
   T extends TapestryViewModel,
   M extends Exclude<string, 'default'>,
@@ -14,12 +18,9 @@ export function useStageInit<
 >(
   sceneRef: RefObject<HTMLDivElement | null>,
   config: {
-    createPixiApps: () => Promise<
-      | [{ name: 'tapestry'; app: Application }]
-      | [{ name: 'tapestry'; app: Application }, { name: S; app: Application }]
-    >
+    createPixiApps: () => Promise<PixiApps<S>>
     lifecycleController: (stage: TapestryStage<S>) => TapestryLifecycleController<T, M>
-    gestureDectorOptions: GestureDetectorOptions
+    gestureDetectorOptions: GestureDetectorOptions
   },
 ) {
   const configRef = usePropRef(config)
@@ -27,7 +28,7 @@ export function useStageInit<
   useAsync(
     async (_abortCtrl, cleanUp) => {
       const scene = sceneRef.current!
-      const { gestureDectorOptions, lifecycleController, createPixiApps } = configRef.current
+      const { gestureDetectorOptions, lifecycleController, createPixiApps } = configRef.current
 
       let cancelled = false as boolean
       cleanUp(() => {
@@ -47,7 +48,7 @@ export function useStageInit<
           (acc, { app, name }) => ({ ...acc, [name]: app }),
           {} as Record<'tapestry' | S, Application>,
         ),
-        gestureDectorOptions,
+        gestureDetectorOptions,
       )
 
       const controller = lifecycleController(stage)
@@ -56,7 +57,14 @@ export function useStageInit<
 
       cleanUp(() => {
         controller.dispose()
-        pixiApps.forEach(({ app }) => app.destroy(true, true))
+        pixiApps.forEach(({ app }) => {
+          // Make sure we clean up the pixi apps properly. Otherwise navigating to the dashboard and then
+          // to another tapestry leads to loss of WebGL context and Pixi doesn't render anything.
+          app.stop()
+          app.ticker.stop()
+          app.stage.removeChildren().forEach((c) => c.destroy({ children: true }))
+          app.destroy(true, true)
+        })
       })
     },
     [sceneRef, configRef],

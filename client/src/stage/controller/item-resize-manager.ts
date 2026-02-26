@@ -40,7 +40,14 @@ import { MAX_ITEM_SIZE, MIN_ITEM_SIZE } from '../../lib/media'
 export type ResizeTarget = HoveredItem | HoveredMultiselection
 
 const maxSizeByType: Partial<Record<ItemType, Size>> = {
-  text: { height: Infinity, width: Infinity },
+  // XXX: We can't afford to have huge items, since visualizing them becomes unwieldy. Mobile Safari can't handle
+  // rendering and transforming large number of DOM elements so we can't depend on the browser handling it. We
+  // need to generate visual data on the backend if we want to support mobile platforms. Capturing a decent
+  // snapshot of a 4000x4000 px text element is no easy task. I've left this increased limit here (larger than
+  // the default 2000x2000 px for other items) for backward compatibility but we need to reconsider it. Huge walls
+  // of text are not the best user experience and if there are other uses of huge text elements we must identify
+  // them and figure out other creative ways to handle them.
+  text: { height: 4000, width: 4000 },
 }
 
 export interface ResizeOptions {

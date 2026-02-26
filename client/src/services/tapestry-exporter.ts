@@ -7,10 +7,11 @@ import {
 } from 'tapestry-core/src/data-format/export'
 import { BlobWriter, TextReader, ZipWriter, BlobReader, Reader } from '@zip.js/zip.js'
 import { createDraft, finishDraft } from 'immer'
-import { fileExtension, hasThumbnail, isMediaItem } from 'tapestry-core/src/utils'
+import { fileExtension, isMediaItem } from 'tapestry-core/src/utils'
 import axios, { AxiosError } from 'axios'
 import { sumBy } from 'lodash-es'
 import { listAll, resource } from './rest-resources'
+import { generateItemThumbnailRenditionName } from 'tapestry-shared/src/utils'
 
 const FILE_PATH_HEADER = 'File-Path-Header'
 
@@ -106,18 +107,14 @@ export class TapestryExporter {
           const filePath = addToDownloads(item.source, item.id, 'items/')
           item.source = `${FILE_PREFIX}${filePath}`
         }
-        if (hasThumbnail(item)) {
-          const filePath = addToDownloads(item.thumbnail.source, `${item.id}-thumbnail`, 'items/')
-          item.thumbnail.source = `${FILE_PREFIX}${filePath}`
-        }
-        if (item.customThumbnail) {
+        item.thumbnail?.renditions.forEach((rendition) => {
           const filePath = addToDownloads(
-            item.customThumbnail,
-            `${item.id}-custom-thumbnail`,
+            rendition.source,
+            generateItemThumbnailRenditionName(item.id, rendition),
             'items/',
           )
-          item.customThumbnail = `${FILE_PREFIX}${filePath}`
-        }
+          rendition.source = `${FILE_PREFIX}${filePath}`
+        })
         // This needs to be done after the call to isMediaItem, since otherwise the zod parsing will fail
         // @ts-expect-error removing to comply with export schema
         delete item.tapestryId
@@ -191,18 +188,13 @@ export class TapestryExporter {
                 buffers.push({ blob: new Blob([]), path: filePath })
                 break
               }
-              // @ts-expect-error TS wants to check if the item has a thumbnail
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-              if (i.thumbnail?.source === prefixedPath) {
-                // @ts-expect-error see above
-                i.thumbnail = undefined
+              const idx = i.thumbnail?.renditions.findIndex((r) => r.source === prefixedPath) ?? -1
+              if (idx >= 0) {
+                i.thumbnail!.renditions.splice(idx, 1)
+                if (i.thumbnail!.renditions.length === 0) {
+                  delete i.thumbnail
+                }
                 hasRecovered = true
-                break
-              }
-              if (i.customThumbnail === prefixedPath) {
-                i.customThumbnail = undefined
-                hasRecovered = true
-                break
               }
             }
             if (hasRecovered) {

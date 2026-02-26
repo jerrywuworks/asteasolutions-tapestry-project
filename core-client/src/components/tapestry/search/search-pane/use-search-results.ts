@@ -7,7 +7,7 @@ import { Tab } from '.'
 import { useTapestryConfig } from '../..'
 import { usePropRef } from '../../../../../src/components/lib/hooks/use-prop-ref'
 import { IconName } from '../../../../../src/components/lib/icon/index'
-import { supportsCustomThumbnail, supportsThumbnail } from '../../../../view-model/utils'
+import { getPrimaryThumbnail } from '../../../../view-model/utils'
 import { SearchResultProps } from './search-result'
 
 const itemIcons: Record<ItemType, IconName> = {
@@ -75,7 +75,7 @@ function getMatchDescription(dto: Item, search: string) {
     return `Shown because "${search}" matches the item notes.`
   }
   if (mediaItem && dto.source.toLowerCase().includes(query)) {
-    return `Shown because "search" matches the item url.`
+    return `Shown because "${search}" matches the item url.`
   }
 }
 
@@ -93,13 +93,7 @@ export function useSearchResults(
         const type: Exclude<Tab, 'all'> = isMediaItem(dto) ? 'items' : 'text'
         const id = dto.id
         const thumbnail =
-          supportsCustomThumbnail(dto) && dto.customThumbnail
-            ? dto.customThumbnail
-            : supportsThumbnail(dto) && dto.thumbnail?.source
-              ? dto.thumbnail.source
-              : dto.type === 'image'
-                ? dto.source
-                : itemIcons[dto.type]
+          getPrimaryThumbnail(dto) ?? (dto.type === 'image' ? dto.source : itemIcons[dto.type])
 
         const description = getMatchDescription(dto, search)
 

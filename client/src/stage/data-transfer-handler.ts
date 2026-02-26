@@ -119,7 +119,7 @@ export async function parseStringTransferData(
 }
 
 function sanitizeForCopy(item: ItemDto): Omit<ItemCreateDto, 'tapestryId'> {
-  return omit(item, 'id', 'createdAt', 'updatedAt', 'tapestryId', 'groupId')
+  return omit(item, 'id', 'createdAt', 'updatedAt', 'tapestryId', 'groupId', 'thumbnail')
 }
 
 export async function dataTransferToFiles(transfer: DataTransfer) {

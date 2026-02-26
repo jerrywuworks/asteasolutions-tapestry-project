@@ -35,7 +35,7 @@ import {
   MediaItemSource,
 } from '../../lib/media'
 import { resource } from '../../services/rest-resources'
-import { isFunction } from 'lodash-es'
+import { isFunction, omit } from 'lodash-es'
 import mime from 'mime'
 import axios, { AxiosProgressEvent } from 'axios'
 import { arrayToIdMap, fileExtension, isMediaItem } from 'tapestry-core/src/utils'
@@ -160,6 +160,7 @@ export function fromTapestryDto(
   userAccess: UserAccess,
   commentThreads: CommentThreadsDto,
   presentationSteps: PresentationStepDto[],
+  deoptimize: boolean,
 ): EditableTapestryViewModel {
   const presentationStepViewModels = presentationSteps.map((dto) => ({ dto }))
 
@@ -175,6 +176,7 @@ export function fromTapestryDto(
   )
   const editableTapestryViewModel: EditableTapestryViewModel = {
     ...baseViewModel,
+    disableOptimizations: deoptimize,
     items: Object.fromEntries(tapestry.items?.map((item) => [item.id, { dto: item }]) ?? []),
     rels: Object.fromEntries(tapestry.rels?.map((rel) => [rel.id, { dto: rel }]) ?? []),
     groups: Object.fromEntries(tapestry.groups?.map((group) => [group.id, { dto: group }]) ?? []),
@@ -315,8 +317,17 @@ export async function createMediaItem<T extends MediaItemType>(
 // 2) Implement some sort of ref counting to S3 resource. This can be done only in the context of a tapestry
 //    or maybe even globally. This way we can save on some storage space, but it will introduce additional
 //    complexity
-export function duplicateItem<T extends ItemDto>(item: T): ItemCreateDto {
-  return structuredClone(item)
+export function duplicateItem<I extends ItemDto>(item: I): ItemCreateDto {
+  // We clone items without thumbnails for now, since we don't have a mechanism to create thumbnails during item
+  // creation. This is only a problem if the item has a custom thumbnail - it will be cloned without it. In this
+  // case, however, the cloning procedure would be more complicated since the thumbnail asset itself needs to be
+  // copied first and attached to the cloned item afterwards.
+  const createDto = omit(item, ['id', 'createdAt', 'updatedAt', 'tapestry', 'thumbnail'])
+  // XXX: I can't convince TypeScript that the type is correct at this point. In fact, it would be more appropriate
+  // if the return type is some kind of mapped type that returns the correct CreateDto that corresponds to the given
+  // item type I. However, I tried this approach and it also didn't work. I am force-casting it for now and hopefully
+  // we'll figure it out at some point.
+  return structuredClone(createDto) as unknown as ItemCreateDto
 }
 
 export async function getMediaType(source: MediaItemSource): Promise<string | null> {

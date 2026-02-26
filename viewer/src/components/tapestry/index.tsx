@@ -32,7 +32,7 @@ export function Tapestry({ onBack }: TapestryProps) {
   const store = useTapestryStore()
 
   useStageInit(sceneRef, {
-    gestureDectorOptions: { scrollGesture: 'pan', dragToPan: store.get('pointerMode') === 'pan' },
+    gestureDetectorOptions: { scrollGesture: 'pan', dragToPan: store.get('pointerMode') === 'pan' },
     createPixiApps: async () => [
       {
         name: 'tapestry',

@@ -16,9 +16,7 @@ export interface AudioItemPlayerProps extends Partial<MediaPlayerProps<'audio'>>
 export const AudioItemPlayer = memo(
   ({ id, mediaType, style, onPlayerReady, ...playerProps }: AudioItemPlayerProps) => {
     const { useStoreData } = useTapestryConfig()
-    const { startTime, source, stopTime, customThumbnail } = useStoreData(
-      `items.${id}.dto`,
-    ) as AudioItemDto
+    const { startTime, source, stopTime } = useStoreData(`items.${id}.dto`) as AudioItemDto
     const src = useMediaSource(source)
     const mediaParams = useMediaParams(id)
     const [player, setPlayer] = useState<Player>()
@@ -31,9 +29,10 @@ export const AudioItemPlayer = memo(
         mediaType,
         controls: true,
         inactivityTimeout: 0,
-        ...(customThumbnail ? { poster: customThumbnail, audioOnlyMode: false } : {}),
+        // TODO[rado]: implement audio poster images
+        // ...(customThumbnail ? { poster: customThumbnail, audioOnlyMode: false } : {}),
       }),
-      [src, mediaType, customThumbnail],
+      [src, mediaType],
     )
 
     return (

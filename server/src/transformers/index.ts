@@ -14,7 +14,7 @@ import { TapestryCreateJobDto } from 'tapestry-shared/src/data-transfer/resource
 import { userDbToDto } from './user.js'
 import { tapestryDbToDto } from './tapestry.js'
 import { get, identity, set, pick } from 'lodash-es'
-import { itemDbToDto } from './item.js'
+import { imageAssetRenditionDbToDto, itemDbToDto } from './item.js'
 import { relDbToDto } from './rel.js'
 import { commentDbToDto } from './comment.js'
 import { TapestryInteractionDto } from 'tapestry-shared/src/data-transfer/resources/dtos/tapestry-interaction.js'
@@ -30,6 +30,10 @@ import { OneOrMore } from 'tapestry-core/src/utils.js'
 import { UserSecretDto } from 'tapestry-shared/src/data-transfer/resources/dtos/user-secret.js'
 import { TapestryBookmarkDto } from 'tapestry-shared/src/data-transfer/resources/dtos/tapestry-bookmark.js'
 import { userToPublicProfileDto } from 'tapestry-shared/src/utils.js'
+import {
+  ImageAssetDto,
+  ImageAssetRenditionDto,
+} from 'tapestry-shared/src/data-transfer/resources/dtos/image-assets.js'
 
 interface DtoMap {
   Tapestry: { default: TapestryDto }
@@ -51,6 +55,8 @@ interface DtoMap {
   PresentationStep: { default: PresentationStepDto }
   UserSecret: { default: UserSecretDto }
   TapestryBookmark: { default: TapestryBookmarkDto }
+  ImageAsset: { default: ImageAssetDto }
+  ImageAssetRendition: { default: ImageAssetRenditionDto }
 }
 
 type ModelSerializer<M extends Prisma.ModelName, V extends keyof DtoMap[M]> = (
@@ -87,6 +93,8 @@ const MODEL_SERIALIZERS: ModelSerializersMap = {
   PresentationStep: { default: presentationStepDbToDto },
   UserSecret: { default: identity },
   TapestryBookmark: { default: identity },
+  ImageAsset: { default: identity },
+  ImageAssetRendition: { default: imageAssetRenditionDbToDto },
 }
 
 type RelationViews = {

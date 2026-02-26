@@ -7,10 +7,10 @@ import { Graphics, Rectangle as PixiRectangle, TilingSprite } from 'pixi.js'
 import { neg, ORIGIN, translate } from 'tapestry-core/src/lib/geometry'
 import { ThemeName } from 'tapestry-core-client/src/theme/themes'
 import { isEqual } from 'lodash-es'
-import { ItemRenderer } from './item-renderer'
+import { EditorItemRenderer } from './item-renderer'
 import { TapestryRenderer } from 'tapestry-core-client/src/stage/renderer'
 import { TapestryStage } from 'tapestry-core-client/src/stage'
-import { isRelViewModel } from 'tapestry-core-client/src/view-model/utils'
+import { isItemViewModel, isRelViewModel } from 'tapestry-core-client/src/view-model/utils'
 import {
   isHoveredElement,
   isHoveredGroup,
@@ -18,6 +18,8 @@ import {
 } from 'tapestry-core-client/src/stage/utils'
 import { idMapToArray } from 'tapestry-core/src/utils'
 import { EditorRelRenderer } from './rel-renderer'
+import { GroupBackgroundRenderer } from 'tapestry-core-client/src/stage/renderer/group-background-renderer'
+import { Selection, TapestryElementRef } from 'tapestry-core-client/src/view-model'
 
 function getResizeCursor({ top, right, bottom, left }: DirectionMask) {
   if ((top && right) || (bottom && left)) {
@@ -68,6 +70,17 @@ export class EditorTapestryRenderer extends TapestryRenderer<EditableTapestryEle
     this.renderViewModel(this.editorStore.get('newRelPreview'))
   }
 
+  protected isSelected(
+    viewModel: EditableTapestryElementViewModel,
+    selection?: Selection,
+    interactiveElement?: TapestryElementRef | null,
+  ): boolean | '' | null | undefined {
+    return (
+      super.isSelected(viewModel, selection, interactiveElement) ||
+      (isRelViewModel(viewModel) && !!viewModel.dragState)
+    )
+  }
+
   protected getRenderedTapestryElementIds() {
     const renderIds = super.getRenderedTapestryElementIds()
     const newRelPreview = this.editorStore.get('newRelPreview')
@@ -92,7 +105,7 @@ export class EditorTapestryRenderer extends TapestryRenderer<EditableTapestryEle
     }
 
     if (!grid) {
-      grid = new TilingSprite({ label: 'grid' })
+      grid = new TilingSprite({ label: 'grid', eventMode: 'none' })
       this.stage.pixi.tapestry.stage.addChildAt(grid, 0)
     }
 
@@ -169,6 +182,10 @@ export class EditorTapestryRenderer extends TapestryRenderer<EditableTapestryEle
       return new EditorRelRenderer(this.editorStore, this.stage, model)
     }
 
-    return new ItemRenderer(this.editorStore, this.stage, model)
+    if (isItemViewModel(model)) {
+      return new EditorItemRenderer(this.editorStore, this.stage, model)
+    }
+
+    return new GroupBackgroundRenderer(this.editorStore.as('base'), this.stage, model)
   }
 }

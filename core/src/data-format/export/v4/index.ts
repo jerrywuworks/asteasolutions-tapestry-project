@@ -11,7 +11,7 @@ import {
   ExportV3Schema,
 } from '../v3/index.js'
 import { KNOWN_WEBPAGE_TYPES } from '../../schemas/item.js'
-import { ThumbnailSchema } from '../../schemas/item.js'
+import { ThumbnailSchema } from '../v2/index.js'
 
 const GroupSchema = z.object({
   id: z.string(),

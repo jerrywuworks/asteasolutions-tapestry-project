@@ -71,7 +71,7 @@ export function Tapestry() {
   const store = useTapestryStore()
   const tapestryDataSyncCommandsRef = usePropRef(useTapestryDataSyncCommands())
   useStageInit(sceneRef, {
-    gestureDectorOptions: { scrollGesture: 'pan', dragToPan: store.get('pointerMode') === 'pan' },
+    gestureDetectorOptions: { scrollGesture: 'pan', dragToPan: store.get('pointerMode') === 'pan' },
     createPixiApps: async () => {
       const overlay = new Color(THEMES[store.get('theme')].color('overlay'))
       return [

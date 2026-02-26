@@ -51,7 +51,10 @@ export function createTapestryStage<PixiApps extends string>(
   return stage
 }
 
-export async function createPixiApp(container: HTMLDivElement, opts?: Partial<ApplicationOptions>) {
+export async function createPixiApp(
+  container: HTMLElement,
+  opts?: Partial<Omit<ApplicationOptions, 'canvas'>>,
+) {
   const app = new Application()
 
   await app.init({
@@ -61,7 +64,7 @@ export async function createPixiApp(container: HTMLDivElement, opts?: Partial<Ap
     autoDensity: true,
     resolution: Math.max(2, window.devicePixelRatio),
     roundPixels: true,
-    eventMode: 'static',
+    eventMode: 'passive',
     sharedTicker: true,
     ...opts,
   })

@@ -355,6 +355,9 @@ export const tapestries: RESTResourceImpl<Resources['tapestries'], Prisma.Tapest
             OR: [{ item: { tapestryId: id } }, { group: { tapestryId: id } }],
           },
         })
+        await tx.imageAsset.deleteMany({
+          where: { thumbnailForItems: { some: { tapestryId: id } } },
+        })
         await tx.tapestry.delete({ where: { id } })
       })
     },

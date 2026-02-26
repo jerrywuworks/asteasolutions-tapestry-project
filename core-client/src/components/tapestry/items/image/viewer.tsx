@@ -9,6 +9,11 @@ export const ImageItemViewer = memo(({ id }: TapestryElementComponentProps) => {
   const src = useMediaSource(source)
 
   return (
-    <img src={src} style={{ display: 'block', width: '100%', height: '100%' }} draggable={false} />
+    <img
+      src={src}
+      crossOrigin="anonymous"
+      style={{ display: 'block', width: '100%', height: '100%' }}
+      draggable={false}
+    />
   )
 })

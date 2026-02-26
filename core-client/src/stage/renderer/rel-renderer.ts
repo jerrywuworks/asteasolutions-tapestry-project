@@ -40,7 +40,17 @@ export function drawCurve(gfx: Graphics, curve: Curve, part: 'full' | 'head' | '
   return gfx
 }
 
-export class RelRenderer<R extends RelViewModel> extends TapestryElementRenderer<R> {
+export interface RelRenderState<R extends RelViewModel> {
+  viewModel: R
+  fromItem: ItemViewModel
+  toItem: ItemViewModel
+  isHighlighted: boolean
+}
+
+export class RelRenderer<R extends RelViewModel> extends TapestryElementRenderer<
+  R,
+  RelRenderState<R>
+> {
   private line: Graphics
   private lineHighlightFrom: Graphics
   private lineHighlightTo: Graphics
@@ -66,21 +76,31 @@ export class RelRenderer<R extends RelViewModel> extends TapestryElementRenderer
     return computeRelCurvePoints(viewModel, items)
   }
 
-  protected renderInternal(viewModel: R) {
-    super.renderInternal(viewModel)
+  protected obtainRenderState(viewModel: R, store: Store<TapestryViewModel>): RelRenderState<R> {
+    const { id, from, to } = viewModel.dto
+    const { items } = store.get()
+    const fromItem = items[from.itemId]!
+    const toItem = items[to.itemId]!
+    const isInteractive = id === store.get('interactiveElement.modelId')
+    const pointerInteractionTarget = store.get('pointerInteraction.target')
+    return {
+      viewModel,
+      fromItem,
+      toItem,
+      isHighlighted:
+        isInteractive ||
+        (isHoveredElement(pointerInteractionTarget) && pointerInteractionTarget.modelId === id),
+    }
+  }
 
-    const { id, from, to, color, weight } = viewModel.dto
-    const isActive = id === this.store.get('interactiveElement.modelId')
-    const pointerInteractionTarget = this.store.get('pointerInteraction.target')
-    const isHighlighted =
-      isActive ||
-      (isHoveredElement(pointerInteractionTarget) && pointerInteractionTarget.modelId === id)
-
-    if (viewModel === this.lastRenderedModel) {
+  protected doRender(state: RelRenderState<R>, changedKeys: (keyof RelRenderState<R>)[]) {
+    if (changedKeys.length === 1 && changedKeys[0] === 'isHighlighted') {
       // No need to redraw the paths, just update the highlights, if necessary
-      this.lineHighlightFrom.alpha = this.lineHighlightTo.alpha = isHighlighted ? 0.1 : 0
+      this.lineHighlightFrom.alpha = this.lineHighlightTo.alpha = state.isHighlighted ? 0.1 : 0
       return
     }
+
+    const { from, to, color, weight } = state.viewModel.dto
 
     this.line.clear()
     this.lineHighlightFrom.clear()
@@ -88,8 +108,10 @@ export class RelRenderer<R extends RelViewModel> extends TapestryElementRenderer
     this.fromArrowhead.clear()
     this.toArrowhead.clear()
 
-    const { items } = this.store.get()
-    const curve = this.computeRelCurvePoints(viewModel, items)
+    const curve = this.computeRelCurvePoints(state.viewModel, {
+      [state.fromItem.dto.id]: state.fromItem,
+      [state.toItem.dto.id]: state.toItem,
+    })
 
     const arrowHeadSize = REL_ARROWHEAD_SIZES[weight]
     const lineStrokeWidth = REL_LINE_WIDTHS[weight]
@@ -108,7 +130,7 @@ export class RelRenderer<R extends RelViewModel> extends TapestryElementRenderer
     drawCurve(this.lineHighlightFrom, curve, 'head').stroke(highlightStrokeStyle)
     drawCurve(this.lineHighlightTo, curve, 'tail').stroke(highlightStrokeStyle)
     this.lineHighlightFrom.tint = this.lineHighlightTo.tint = color
-    this.lineHighlightFrom.alpha = this.lineHighlightTo.alpha = isHighlighted ? 0.1 : 0
+    this.lineHighlightFrom.alpha = this.lineHighlightTo.alpha = state.isHighlighted ? 0.1 : 0
 
     if (from.arrowhead === 'arrow') {
       this.drawArrowhead(

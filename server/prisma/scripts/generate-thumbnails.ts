@@ -1,14 +1,20 @@
 import { ItemType } from '@prisma/client'
 import { prisma } from '../../src/db.js'
-import { scheduleItemThumbnailGeneration } from '../../src/resources/items.js'
+import { scheduleItemThumbnailProcessing } from '../../src/resources/items.js'
 
 interface Options {
   tapestryId?: string
   ids?: string[]
   types?: ItemType[]
+  forceRegenerate?: boolean
 }
 
-export async function generateThumbnails({ tapestryId, ids, types }: Options = {}) {
+export async function generateThumbnails({
+  tapestryId,
+  ids,
+  types,
+  forceRegenerate,
+}: Options = {}) {
   const items = await prisma.item.findMany({
     where: {
       tapestryId,
@@ -17,6 +23,6 @@ export async function generateThumbnails({ tapestryId, ids, types }: Options = {
     },
   })
   for (const item of items) {
-    await scheduleItemThumbnailGeneration(item.id, true)
+    await scheduleItemThumbnailProcessing(item.id, { skipDelay: true, forceRegenerate })
   }
 }

@@ -76,7 +76,7 @@ export class TapestryExporter {
     try {
       const tapestry = await resource('tapestries').read(
         { id: this.tapestryId },
-        { include: ['items', 'rels', 'groups'] },
+        { include: ['items.thumbnail.renditions', 'rels', 'groups'] },
         { signal: this.killSwitch.signal },
       )
       const presentation = await listAll(

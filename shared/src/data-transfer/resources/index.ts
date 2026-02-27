@@ -90,7 +90,7 @@ import {
 
 const tapestryIncludes = [
   'owner',
-  'items',
+  'items.thumbnail.renditions',
   'rels',
   'groups',
   'userAccess',

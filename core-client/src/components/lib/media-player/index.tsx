@@ -50,6 +50,9 @@ export interface MediaPlayerProps<T extends ComponentType> {
   component: T
   options: VideoJSOptions
   onPlayerReady?: OnPlayerReady
+  onPlay?: () => void
+  onPause?: () => void
+  onEnded?: () => void
   startTime: number
   stopTime?: number
   style?: CSSProperties
@@ -59,6 +62,9 @@ export function MediaPlayer<T extends 'video' | 'audio'>({
   component,
   options,
   onPlayerReady,
+  onPlay,
+  onPause,
+  onEnded,
   startTime,
   stopTime,
   style,
@@ -145,6 +151,29 @@ export function MediaPlayer<T extends 'video' | 'audio'>({
       player.off('loadedmetadata', onLoadedMetadata)
     }
   }, [options, intervalRef, onReadyRef, component])
+
+  const player = playerRef.current
+
+  useEffect(() => {
+    if (!player || !onPlay) return
+
+    player.on('play', onPlay)
+    return () => player.off('play', onPlay)
+  }, [player, onPlay])
+
+  useEffect(() => {
+    if (!player || !onPause) return
+
+    player.on('pause', onPause)
+    return () => player.off('pause', onPause)
+  }, [player, onPause])
+
+  useEffect(() => {
+    if (!player || !onEnded) return
+
+    player.on('ended', onEnded)
+    return () => player.off('ended', onEnded)
+  }, [player, onEnded])
 
   return (
     <div data-vjs-player style={{ height: '100%' }}>

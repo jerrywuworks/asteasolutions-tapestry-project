@@ -13,6 +13,7 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/youtube-player": "^5.5.11",
     "eslint-plugin-react-hooks": "^5.2.0",
     "stylelint": "^16.25.0",
     "stylelint-config-standard": "^39.0.1",
@@ -50,6 +51,7 @@
     "@tiptap/react": "^2.24.2",
     "@tiptap/starter-kit": "^2.24.2",
     "@tweenjs/tween.js": "^25.0.0",
+    "@vimeo/player": "^2.30.2",
     "bowser": "^2.12.1",
     "clsx": "^2.1.1",
     "color": "^5.0.3",
@@ -63,6 +65,7 @@
     "react-pdf": "^10.2.0",
     "react-router": "^7.9.6",
     "tapestry-core": "^1.0.0",
-    "video.js": "^8.23.4"
+    "video.js": "^8.23.4",
+    "youtube-player": "^5.6.0"
   }
 }

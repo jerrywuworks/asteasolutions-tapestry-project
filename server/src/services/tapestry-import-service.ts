@@ -48,7 +48,7 @@ function isMediaItem(i: Item) {
   )
 }
 
-function isPlayable(i: Item) {
+function hasStartStopTime(i: Item) {
   return i.type === 'video' || i.type === 'audio'
 }
 
@@ -239,7 +239,7 @@ export class TapestryImportService {
                     i.type === 'webpage'
                       ? (i.webpageType ?? (await determineWebpageType(i.source)))
                       : null,
-                  ...(isPlayable(i) ? { startTime: i.startTime, stopTime: i.stopTime } : {}),
+                  ...(hasStartStopTime(i) ? { startTime: i.startTime, stopTime: i.stopTime } : {}),
                   defaultPage: i.type === 'pdf' ? i.defaultPage : null,
                 }
               }) ?? [],

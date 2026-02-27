@@ -145,7 +145,7 @@ export class ItemRenderer<I extends ItemViewModel> extends TapestryElementRender
     dropShadow,
   }: ItemRenderState<I>) {
     const snapshot = viewModel.snapshotId && snapshotRegistry[viewModel.snapshotId]
-    if (disableOptimizations || isInteractive || !snapshot) {
+    if (disableOptimizations || isInteractive || viewModel.isPlaying || !snapshot) {
       this.thumbnail.visible = false
     } else {
       const { position, size } = viewModel.dto

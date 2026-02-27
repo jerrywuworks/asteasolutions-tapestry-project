@@ -1,5 +1,5 @@
 import { useMediaSource } from '../../../lib/hooks/use-media-source'
-import { memo, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useMemo, useRef, useState } from 'react'
 import { VideoItem as VideoItemDto } from 'tapestry-core/src/data-format/schemas/item'
 import {
   MediaPlayer,
@@ -17,6 +17,7 @@ import { useTapestryConfig } from '../..'
 import { VideoPlayOverlay } from '../../video-play-overlay'
 import styles from './styles.module.css'
 import { getPrimaryThumbnail } from '../../../../view-model/utils'
+import { setItemIsPlaying } from '../../../../view-model/store-commands/tapestry'
 
 function useVideoThumbnail(dto: VideoItemDto, player: Player | undefined) {
   const [thumbnail, setThumbnail] = useState(getPrimaryThumbnail(dto))
@@ -62,7 +63,10 @@ export interface VideoItemPlayerProps extends Partial<MediaPlayerProps<'video'>>
 
 export const VideoItemPlayer = memo(
   ({ id, mediaType, style, onPlayerReady, ...playerProps }: VideoItemPlayerProps) => {
-    const { useStoreData } = useTapestryConfig()
+    const { useStoreData, useDispatch } = useTapestryConfig()
+    const dispatch = useDispatch()
+    const onStart = useCallback(() => dispatch(setItemIsPlaying(id, true)), [dispatch, id])
+    const onStop = useCallback(() => dispatch(setItemIsPlaying(id, false)), [dispatch, id])
     const dto = useStoreData(`items.${id}.dto`) as VideoItemDto
     const isInteractive = useStoreData('interactiveElement')?.modelId === id
     const src = useMediaSource(dto.source)
@@ -95,6 +99,9 @@ export const VideoItemPlayer = memo(
             setPlayer(player)
             onPlayerReady?.(player)
           }}
+          onPlay={onStart}
+          onPause={onStop}
+          onEnded={onStop}
           startTime={mediaParams.startTime ?? dto.startTime ?? 0}
           stopTime={mediaParams.stopTime ?? dto.stopTime ?? undefined}
           // The video is hidden in order to optimize the Safari layering algorithm

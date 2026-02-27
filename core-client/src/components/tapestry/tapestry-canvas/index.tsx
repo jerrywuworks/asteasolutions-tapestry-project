@@ -52,7 +52,8 @@ function TapestryElementLocator({
   const isInSelection = isItemInSelection(item, selection)
   const hasBeenActive = !!item?.hasBeenActive
   const hasPersistentState = (PERSIST_ITEM_TYPES as (string | undefined)[]).includes(item?.dto.type)
-  const shouldDisplayDom = disableOptimizations || isInteractive || !item?.snapshotId
+  const shouldDisplayDom =
+    disableOptimizations || isInteractive || item?.isPlaying || !item?.snapshotId
 
   if (!shouldDisplayDom && (!hasBeenActive || !hasPersistentState)) {
     // The item should currently be hidden since it is not interactive and a placeholder will be displayed instead.

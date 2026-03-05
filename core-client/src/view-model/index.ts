@@ -121,6 +121,13 @@ export interface TapestryViewModel<
   readonly pointerSelection?: PointerSelection | null
   readonly interactiveElement?: TapestryElementRef | null
   readonly snackbarData?: SnackbarData
+  /**
+   * Tapestry items can be pre-rendered on the backend and then a tapestry client can display image representations
+   * of tapestry items instead of the actual items as a performance optimization. In some cases these optimizations
+   * may be unwanted - for example if the pre-rendered images for a given tapestry are corrupted or in other specific
+   * scenarios where the DOM representations of the items need to be displayed directly. This flag controls whether
+   * these optimizations are used when displaying the tapestry or not.
+   */
   readonly disableOptimizations?: boolean
   readonly outlinedItemId?: string
   readonly searchTerm?: string | null

@@ -46,7 +46,7 @@ export class ItemThumbnailController implements TapestryStageController {
   }
 
   dispose(): void {
-    this.store.unsubscribe(this.recalculateLevelOfDetail)
+    this.store.unsubscribe(this.recalculateLOD)
     this.store.unsubscribe(this.onItemsChanged)
 
     this.thumbnailLoader?.removeEventListener('message', this.onThumbnailLoaderMessage)
@@ -58,10 +58,10 @@ export class ItemThumbnailController implements TapestryStageController {
     if (this.isInitialized) return
 
     this.isInitialized = true
-    this.store.subscribe('viewport.transform', this.recalculateLevelOfDetail)
+    this.store.subscribe('viewport.transform', this.recalculateLOD)
     this.store.subscribe('items', this.onItemsChanged)
 
-    this.recalculateLevelOfDetail()
+    this.recalculateLOD()
   }
 
   private onThumbnailLoaderMessage = (
@@ -99,10 +99,6 @@ export class ItemThumbnailController implements TapestryStageController {
 
   private fetchInitialThumbnails() {
     for (const item of idMapToArray(this.store.get('items'))) {
-      const itemId = item.dto.id
-      this.thumbnails[itemId] ??= {}
-      const state = this.thumbnails[itemId]
-
       const thumbnailRenditions = item.dto.thumbnail?.renditions ?? []
       const rendition = minBy(thumbnailRenditions, ({ size }) => size.width)
       if (!rendition) {
@@ -110,13 +106,7 @@ export class ItemThumbnailController implements TapestryStageController {
         continue
       }
 
-      const requestId = uniqueId('thumbnail-request')
-      this.thumbnailLoader?.postMessage({
-        requestId,
-        itemId,
-        url: rendition.source,
-      } satisfies ThumbnailLoadRequest)
-      state.requestedRendition = { requestId, meta: rendition }
+      const requestId = this.requestThumbnailRendition(item.dto.id, rendition)
       this.initialRequestIds.add(requestId)
     }
   }
@@ -131,7 +121,7 @@ export class ItemThumbnailController implements TapestryStageController {
     return maxLOD
   }
 
-  private recalculateLevelOfDetail = debounce(() => {
+  private recalculateLOD = debounce(() => {
     const viewport = this.store.get('viewport')
     const viewportRect = new Rectangle(
       positionAtViewport(viewport, ORIGIN),
@@ -160,22 +150,30 @@ export class ItemThumbnailController implements TapestryStageController {
     }
 
     this.thumbnails[itemId] ??= {}
-    const state = this.thumbnails[itemId]
-    const requestedOrLoadedRendition = state.requestedRendition ?? state.loadedRendition
+    const { requestedRendition, loadedRendition } = this.thumbnails[itemId]
+    const requestedOrLoadedRendition = requestedRendition ?? loadedRendition
 
     const isVisible = viewportRect.intersects(new Rectangle(item.dto))
     if (!isVisible && requestedOrLoadedRendition) return
 
     if ((requestedOrLoadedRendition?.meta.size.width ?? 0) < requiredRendition.size.width) {
       // We require a thumbnail with higher LOD than the one which is currently loaded or requested for this item.
-      const requestId = uniqueId('thumbnail-request')
-      this.thumbnailLoader?.postMessage({
-        requestId,
-        itemId,
-        url: requiredRendition.source,
-      } satisfies ThumbnailLoadRequest)
-      state.requestedRendition = { requestId, meta: requiredRendition }
+      // TODO: At some point we may flag items for which we require lower LOD than currently loaded and offload
+      // the higher resolution thumbnail in favor of a smaller one in order to save memory.
+      this.requestThumbnailRendition(itemId, requiredRendition)
     }
+  }
+
+  private requestThumbnailRendition(itemId: string, rendition: ImageAssetRendition) {
+    const requestId = uniqueId('thumbnail-request')
+    this.thumbnailLoader?.postMessage({
+      requestId,
+      itemId,
+      url: rendition.source,
+    } satisfies ThumbnailLoadRequest)
+    this.thumbnails[itemId] ??= {}
+    this.thumbnails[itemId].requestedRendition = { requestId, meta: rendition }
+    return requestId
   }
 
   private findRenditionForSize(renditions: ImageAssetRendition[], { width }: Size, maxLOD: number) {

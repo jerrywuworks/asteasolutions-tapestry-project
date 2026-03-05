@@ -4,6 +4,7 @@ import { extname, join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { Readable } from 'node:stream'
 import { finished } from 'node:stream/promises'
+import { spawn as nodeSpawn } from 'node:child_process'
 
 export interface DownloadOpts {
   timeoutMs?: number
@@ -57,4 +58,26 @@ export async function downloadToTempFile(urlStr: string, opts: DownloadOpts = {}
   await finished(Readable.fromWeb(res.body).pipe(createWriteStream(filePath)))
 
   return filePath
+}
+
+export async function spawn(command: string, args: string[], input?: Buffer) {
+  return new Promise<Buffer>((resolve, reject) => {
+    const proc = nodeSpawn(command, args, { stdio: [input ? 'pipe' : 'ignore', 'pipe', 'pipe'] })
+    const chunks: Buffer[] = []
+    let err = ''
+
+    proc.stdout!.on('data', (d: Buffer) => chunks.push(d))
+    proc.stderr!.on('data', (d: Buffer) => (err += d.toString()))
+
+    proc.on('error', reject)
+    proc.on('close', (code) => {
+      if (code !== 0) return reject(new Error(`${command} exited ${code}: ${err}`))
+
+      resolve(Buffer.concat(chunks))
+    })
+
+    if (input) {
+      proc.stdin!.end(input)
+    }
+  })
 }

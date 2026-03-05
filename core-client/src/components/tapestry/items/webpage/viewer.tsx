@@ -25,7 +25,6 @@ export const ALLOWED_ORIGINS = [
   location.origin,
   'https://archive.org',
   'https://youtube.com',
-  'https://youtube.com',
   'https://player.vimeo.com',
 ]
 

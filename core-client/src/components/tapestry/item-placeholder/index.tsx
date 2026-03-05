@@ -26,6 +26,8 @@ export function ItemPlaceholder({
         <>
           <img
             src={thumbnailSrc}
+            // Images that may be loaded via `fetch` elsewhere must always be loaded with CORS policy "anonymous"
+            // in order to prevent cached CORS header errors in Chrome.
             crossOrigin="anonymous"
             className={clsx(styles.thumbnail, classes?.thumbnail)}
           />

@@ -75,6 +75,10 @@ export const VideoItemPlayer = memo(
 
     useAutoplay(id, player, mediaParams.autoplay)
 
+    useMediaEvent(player, 'play', onStart)
+    useMediaEvent(player, 'pause', onStop)
+    useMediaEvent(player, 'ended', onStop)
+
     const showVideo = player?.paused() === false || isInteractive
 
     const thumbnail = useVideoThumbnail(dto, player)
@@ -99,9 +103,6 @@ export const VideoItemPlayer = memo(
             setPlayer(player)
             onPlayerReady?.(player)
           }}
-          onPlay={onStart}
-          onPause={onStop}
-          onEnded={onStop}
           startTime={mediaParams.startTime ?? dto.startTime ?? 0}
           stopTime={mediaParams.stopTime ?? dto.stopTime ?? undefined}
           // The video is hidden in order to optimize the Safari layering algorithm
@@ -116,6 +117,8 @@ export const VideoItemPlayer = memo(
         {thumbnail && (
           <img
             src={thumbnail}
+            // Images that may be loaded via `fetch` elsewhere must always be loaded with CORS policy "anonymous"
+            // in order to prevent cached CORS header errors in Chrome.
             crossOrigin="anonymous"
             style={{
               display: showVideo ? 'none' : 'block',

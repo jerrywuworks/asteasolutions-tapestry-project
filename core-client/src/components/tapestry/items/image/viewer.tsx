@@ -11,6 +11,8 @@ export const ImageItemViewer = memo(({ id }: TapestryElementComponentProps) => {
   return (
     <img
       src={src}
+      // Images that may be loaded via `fetch` elsewhere must always be loaded with CORS policy "anonymous"
+      // in order to prevent cached CORS header errors in Chrome.
       crossOrigin="anonymous"
       style={{ display: 'block', width: '100%', height: '100%' }}
       draggable={false}

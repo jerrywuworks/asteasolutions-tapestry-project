@@ -1,7 +1,12 @@
 import { useMediaSource } from '../../../lib/hooks/use-media-source'
 import { memo, useCallback, useMemo, useState } from 'react'
 import { AudioItem as AudioItemDto } from 'tapestry-core/src/data-format/schemas/item'
-import { MediaPlayer, MediaPlayerProps, VideoJSOptions } from '../../../lib/media-player'
+import {
+  MediaPlayer,
+  MediaPlayerProps,
+  useMediaEvent,
+  VideoJSOptions,
+} from '../../../lib/media-player'
 import { useTapestryConfig } from '../..'
 import { useMediaParams } from '../../hooks/use-media-params'
 import { Id } from 'tapestry-core/src/data-format/schemas/common'
@@ -32,6 +37,10 @@ export const AudioItemPlayer = memo(
 
     useAutoplay(id, player, mediaParams.autoplay)
 
+    useMediaEvent(player, 'play', onStart)
+    useMediaEvent(player, 'pause', onStop)
+    useMediaEvent(player, 'ended', onStop)
+
     const options = useMemo<VideoJSOptions>(
       () => ({
         src,
@@ -51,9 +60,6 @@ export const AudioItemPlayer = memo(
           setPlayer(player)
           onPlayerReady?.(player)
         }}
-        onPlay={onStart}
-        onPause={onStop}
-        onEnded={onStop}
         startTime={mediaParams.startTime ?? startTime ?? 0}
         stopTime={mediaParams.stopTime ?? stopTime ?? undefined}
         style={{ display: 'block', width: '100%', height: '100%', ...style }}

@@ -1,3 +1,4 @@
+import { pick } from 'lodash-es'
 import { pdfjs } from 'react-pdf'
 import { urlToBlob } from 'tapestry-core-client/src/lib/file'
 import { aspectRatio, clampSize, innerFit, Size } from 'tapestry-core/src/lib/geometry'
@@ -9,18 +10,13 @@ function mediaSourceToSrc(source: MediaItemSource) {
   return typeof source === 'string' ? source : URL.createObjectURL(source)
 }
 
-export function loadImageFromBlob(file: Blob) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const url = URL.createObjectURL(file)
-    const image = new Image()
-    image.addEventListener('load', () => {
-      resolve(image)
-      URL.revokeObjectURL(url)
-    })
-    image.src = url
-
-    image.addEventListener('error', reject)
-  })
+export async function loadImageFromBlob(file: Blob) {
+  const objectUrl = URL.createObjectURL(file)
+  const image = new Image()
+  image.src = objectUrl
+  await image.decode()
+  URL.revokeObjectURL(objectUrl)
+  return image
 }
 
 export function mediaSourceToBlob(source: MediaItemSource) {
@@ -37,11 +33,16 @@ export const MAX_ITEM_SIZE: Size = {
   height: 2000,
 }
 
+export async function getImageSize(source: MediaItemSource): Promise<Size> {
+  const image = await loadImageFromBlob(await mediaSourceToBlob(source))
+  return pick(image, 'width', 'height')
+}
+
 function getClampedItemSize(size: Size) {
   return clampSize(size, MIN_ITEM_SIZE, MAX_ITEM_SIZE)
 }
 
-export async function getImageSize(source: MediaItemSource, width?: number): Promise<Size> {
+export async function getImageItemSize(source: MediaItemSource, width?: number): Promise<Size> {
   const image = await loadImageFromBlob(await mediaSourceToBlob(source))
   const defaultImageWidth = 300
   const imageWidth = width ?? defaultImageWidth
@@ -54,7 +55,7 @@ export async function getImageSize(source: MediaItemSource, width?: number): Pro
 
 const DEFAULT_VIDEO_WIDTH = 500
 
-export async function getVideoSize(source: MediaItemSource): Promise<Size> {
+export async function getVideoItemSize(source: MediaItemSource): Promise<Size> {
   return new Promise((resolve) => {
     const video = document.createElement('video')
     video.src = mediaSourceToSrc(source)
@@ -69,7 +70,7 @@ export async function getVideoSize(source: MediaItemSource): Promise<Size> {
   })
 }
 
-export async function getPDFSize(source: MediaItemSource): Promise<Size> {
+export async function getPDFItemSize(source: MediaItemSource): Promise<Size> {
   const src = mediaSourceToSrc(source)
 
   const doc = await pdfjs.getDocument(src).promise
@@ -89,7 +90,7 @@ const DEFAULT_WEBPAGE_SIZE: Size = {
   height: 500,
 }
 
-export async function getWebpageSize(source: MediaItemSource): Promise<Size> {
+export async function getWebpageItemSize(source: MediaItemSource): Promise<Size> {
   if (source instanceof File) {
     return DEFAULT_WEBPAGE_SIZE
   }

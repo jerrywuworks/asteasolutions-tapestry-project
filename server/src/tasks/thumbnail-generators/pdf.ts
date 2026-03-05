@@ -1,6 +1,6 @@
-import { spawn } from 'child_process'
 import { ThumbnailRenditionOutput } from './index'
 import { generateThumbnail } from './image'
+import { spawn } from '../utils'
 
 export async function generatePDFThumbnail(
   src: string,
@@ -17,35 +17,20 @@ export async function generatePDFThumbnail(
 
   const inputBuffer = Buffer.from(await res.arrayBuffer())
 
-  return new Promise<ThumbnailRenditionOutput>((resolve, reject) => {
-    // prettier-ignore
-    const magickArgs = [
-      '-limit', 'memory', '256MiB',
-      '-limit', 'map', '512MiB',
-      '-limit', 'area', '100MP',
-      '-density', '300',
-      `pdf:-[${page - 1}]`,
-      '-background', 'white',
-      '-alpha', 'off',
-      '-resize', `${width}x`,
-      '-quality', '75',
-      'jpg:-',
-    ]
+  // prettier-ignore
+  const magickArgs = [
+    '-limit', 'memory', '256MiB',
+    '-limit', 'map', '512MiB',
+    '-limit', 'area', '100MP',
+    '-density', '300',
+    `pdf:-[${page - 1}]`,
+    '-background', 'white',
+    '-alpha', 'off',
+    '-resize', `${width}x`,
+    '-quality', '75',
+    'jpg:-',
+  ]
 
-    const proc = spawn('magick', magickArgs, { stdio: ['pipe', 'pipe', 'pipe'] })
-    const chunks: Buffer[] = []
-    let err = ''
-
-    proc.stdout.on('data', (d: Buffer) => chunks.push(d))
-    proc.stderr.on('data', (d: Buffer) => (err += d.toString()))
-
-    proc.on('error', reject)
-    proc.on('close', (code) => {
-      if (code !== 0) return reject(new Error(`magick exited ${code}: ${err}`))
-
-      generateThumbnail(Buffer.concat(chunks)).then(resolve, reject)
-    })
-
-    proc.stdin.end(inputBuffer)
-  })
+  const image = await spawn('magick', magickArgs, inputBuffer)
+  return generateThumbnail(image)
 }

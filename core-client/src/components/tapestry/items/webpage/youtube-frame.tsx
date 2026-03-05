@@ -15,6 +15,9 @@ export function YouTubeFrame({ onPlaybackStateChange, src, ...props }: WebFrameP
       // Events don't fire properly unless we have the www. subdomain
       url.host = 'www.youtube.com'
     }
+    // Enable YouTube's Iframe API by appending these parameters to the iframe source. Note that this API also
+    // requires the source of the youtube video to be in the `www.` subdomain.
+    // https://developers.google.com/youtube/iframe_api_reference
     url.searchParams.set('enablejsapi', '1')
     url.searchParams.set('origin', window.location.origin)
     return url

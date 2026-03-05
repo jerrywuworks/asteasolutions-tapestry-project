@@ -43,7 +43,7 @@ function getErrorMessage(error: unknown) {
       return 'Tapestry not found'
     }
   }
-  console.error(error)
+  console.error('Error loading tapestry', error)
   return 'Error loading tapestry'
 }
 

@@ -30,6 +30,9 @@ export interface MaterialIconTextureProps {
  * other font-variation-settings, we need to self-host the fonts and define different @font-faces for the different
  * font variants we want to use, since when drawing a font to a canvas we don't have an option to pass additional
  * font settings except for family, weight, style, and size.
+ *
+ * TODO: It may be a good idea to extract the necessary icons as SVGs and use them from there since creating a canvas
+ * to render each icon is a heavy operation that consumes a lot of memory.
  */
 export function materialIconToTexture({
   iconName,

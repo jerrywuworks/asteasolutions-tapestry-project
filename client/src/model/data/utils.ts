@@ -28,10 +28,10 @@ import {
   TapestryWithOwner,
 } from '../../pages/tapestry/view-model'
 import {
-  getImageSize,
-  getPDFSize,
-  getVideoSize,
-  getWebpageSize,
+  getImageItemSize,
+  getPDFItemSize,
+  getVideoItemSize,
+  getWebpageItemSize,
   MediaItemSource,
 } from '../../lib/media'
 import { resource } from '../../services/rest-resources'
@@ -206,10 +206,10 @@ export const itemSizes = {
   actionButton: { width: 350, height: 75 },
   audio: { width: 300, height: 50 },
   book: { width: 700, height: 500 },
-  image: getImageSize,
-  pdf: getPDFSize,
-  video: getVideoSize,
-  webpage: getWebpageSize,
+  image: getImageItemSize,
+  pdf: getPDFItemSize,
+  video: getVideoItemSize,
+  webpage: getWebpageItemSize,
   text: { height: 200, width: 400 },
 } as const satisfies Record<ItemType, Size | ((file: MediaItemSource) => Promise<Size>)>
 

@@ -2,12 +2,7 @@ import { createEventRegistry } from '../../lib/events/event-registry'
 import { arrowShortcuts, matchesShortcut } from '../../lib/keyboard-event'
 import { Store } from '../../lib/store/index'
 import { panViewport, setDefaultViewport } from '../../view-model/store-commands/viewport'
-import {
-  deselectAll,
-  selectAll,
-  setInteractiveElement,
-  setPointerInteraction,
-} from '../../view-model/store-commands/tapestry'
+import { selectAll, setPointerInteraction } from '../../view-model/store-commands/tapestry'
 import { TapestryStage } from '..'
 import { TapestryStageController } from '.'
 import { PointerMode, TapestryViewModel } from '../../view-model'
@@ -20,10 +15,6 @@ type EventTypesMap = {
 }
 
 const { eventListener, attachListeners, detachListeners } = createEventRegistry<EventTypesMap>()
-
-interface PostMessageData {
-  type: 'deactivate'
-}
 
 export type KeyMapping = Record<string, (event: KeyboardEvent) => void>
 
@@ -47,22 +38,12 @@ export class GlobalEventsController implements TapestryStageController {
     this.store.subscribe(['pointerMode'], this.onPointerModeChange)
     attachListeners(this, 'stage', this.stage.root)
     attachListeners(this, 'document', document)
-    addEventListener('message', this.onPostMessage)
   }
 
   dispose() {
     this.store.unsubscribe(this.onPointerModeChange)
     detachListeners(this, 'stage', this.stage.root)
     detachListeners(this, 'document', document)
-    removeEventListener('message', this.onPostMessage)
-  }
-
-  private onPostMessage = (event: MessageEvent<PostMessageData>) => {
-    // Remove this eslint suppression if/when we add more PostMessage types
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (event.data?.type === 'deactivate') {
-      this.store.dispatch(deselectAll(), setInteractiveElement(null))
-    }
   }
 
   private onPointerModeChange = ({ pointerMode }: { pointerMode: PointerMode }) => {

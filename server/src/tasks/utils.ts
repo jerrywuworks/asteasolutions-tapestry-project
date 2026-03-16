@@ -1,13 +1,83 @@
-import { exec as nodeExec } from 'child_process'
+import { createWriteStream } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { extname, join } from 'node:path'
+import { randomUUID } from 'node:crypto'
+import { Readable } from 'node:stream'
+import { finished } from 'node:stream/promises'
+import { spawn as nodeSpawn } from 'node:child_process'
 
-export function exec(cmd: string) {
-  return new Promise<string>((resolve, reject) => {
-    nodeExec(cmd, { maxBuffer: 50 * 1024 * 1024 }, (error, stdout) => {
-      if (error) {
-        reject(error)
-        return
-      }
-      resolve(stdout)
+export interface DownloadOpts {
+  timeoutMs?: number
+  maxBytes?: number
+  allowedContentTypePrefixes?: string[] // e.g. "video/"
+}
+
+export async function downloadImageToArrayBuffer(url: string) {
+  const res = await fetch(url, { redirect: 'follow' })
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`)
+
+  const contentType = res.headers.get('content-type') || ''
+  if (!contentType.startsWith('image/')) {
+    throw new Error(`URL did not return an image (content-type: ${contentType || 'unknown'})`)
+  }
+
+  return Buffer.from(await res.arrayBuffer())
+}
+
+export async function downloadToTempFile(urlStr: string, opts: DownloadOpts = {}) {
+  const url = new URL(urlStr)
+
+  const {
+    timeoutMs = 60_000,
+    maxBytes = 200 * 1024 * 1024, // 200MB default limit
+    allowedContentTypePrefixes,
+  } = opts
+
+  const abortController = new AbortController()
+  const timeoutId = setTimeout(() => abortController.abort(), timeoutMs)
+
+  const res = await fetch(url, {
+    redirect: 'follow',
+    signal: abortController.signal,
+  }).finally(() => clearTimeout(timeoutId))
+
+  if (!res.ok || !res.body) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`)
+
+  const contentType = (res.headers.get('content-type') || '').toLowerCase()
+  if (allowedContentTypePrefixes?.every((prefix) => !contentType.startsWith(prefix))) {
+    throw new Error(`Not a matching content-type: ${contentType || 'unknown'}`)
+  }
+
+  const contentLength = res.headers.get('content-length')
+  if (contentLength && Number(contentLength) > maxBytes) {
+    throw new Error(`Content too large (content-length=${contentLength})`)
+  }
+
+  const extension = extname(url.pathname) || '.bin'
+  const filePath = join(tmpdir(), `file-${randomUUID()}${extension}`)
+  await finished(Readable.fromWeb(res.body).pipe(createWriteStream(filePath)))
+
+  return filePath
+}
+
+export async function spawn(command: string, args: string[], input?: Buffer) {
+  return new Promise<Buffer>((resolve, reject) => {
+    const proc = nodeSpawn(command, args, { stdio: [input ? 'pipe' : 'ignore', 'pipe', 'pipe'] })
+    const chunks: Buffer[] = []
+    let err = ''
+
+    proc.stdout!.on('data', (d: Buffer) => chunks.push(d))
+    proc.stderr!.on('data', (d: Buffer) => (err += d.toString()))
+
+    proc.on('error', reject)
+    proc.on('close', (code) => {
+      if (code !== 0) return reject(new Error(`${command} exited ${code}: ${err}`))
+
+      resolve(Buffer.concat(chunks))
     })
+
+    if (input) {
+      proc.stdin!.end(input)
+    }
   })
 }

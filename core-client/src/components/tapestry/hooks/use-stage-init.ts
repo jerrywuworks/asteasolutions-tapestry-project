@@ -1,11 +1,14 @@
 import { RefObject } from 'react'
 import { useAsync } from '../../lib/hooks/use-async'
-import { createTapestryStage, TapestryStage } from '../../../stage'
+import { createTapestryStage, PixiAppWrapper, TapestryStage } from '../../../stage'
 import { TapestryLifecycleController } from '../../../stage/controller'
-import { Application } from 'pixi.js'
 import { usePropRef } from '../../lib/hooks/use-prop-ref'
 import { TapestryViewModel } from '../../../view-model'
 import { GestureDetectorOptions } from '../../../stage/gesture-detector'
+
+type PixiApps<S extends string> =
+  | [{ name: 'tapestry'; app: PixiAppWrapper }]
+  | [{ name: 'tapestry'; app: PixiAppWrapper }, { name: S; app: PixiAppWrapper }]
 
 export function useStageInit<
   T extends TapestryViewModel,
@@ -14,12 +17,9 @@ export function useStageInit<
 >(
   sceneRef: RefObject<HTMLDivElement | null>,
   config: {
-    createPixiApps: () => Promise<
-      | [{ name: 'tapestry'; app: Application }]
-      | [{ name: 'tapestry'; app: Application }, { name: S; app: Application }]
-    >
+    createPixiApps: () => Promise<PixiApps<S>>
     lifecycleController: (stage: TapestryStage<S>) => TapestryLifecycleController<T, M>
-    gestureDectorOptions: GestureDetectorOptions
+    gestureDetectorOptions: GestureDetectorOptions
   },
 ) {
   const configRef = usePropRef(config)
@@ -27,7 +27,7 @@ export function useStageInit<
   useAsync(
     async (_abortCtrl, cleanUp) => {
       const scene = sceneRef.current!
-      const { gestureDectorOptions, lifecycleController, createPixiApps } = configRef.current
+      const { gestureDetectorOptions, lifecycleController, createPixiApps } = configRef.current
 
       let cancelled = false as boolean
       cleanUp(() => {
@@ -37,7 +37,7 @@ export function useStageInit<
       const pixiApps = await createPixiApps()
 
       if (cancelled) {
-        pixiApps.forEach(({ app }) => app.destroy(true, true))
+        pixiApps.forEach(({ app }) => app.destroy())
         return
       }
 
@@ -45,18 +45,18 @@ export function useStageInit<
         scene,
         pixiApps.reduce(
           (acc, { app, name }) => ({ ...acc, [name]: app }),
-          {} as Record<'tapestry' | S, Application>,
+          {} as Record<'tapestry' | S, PixiAppWrapper>,
         ),
-        gestureDectorOptions,
+        gestureDetectorOptions,
       )
 
       const controller = lifecycleController(stage)
 
-      controller.init()
+      await controller.init()
 
-      cleanUp(() => {
-        controller.dispose()
-        pixiApps.forEach(({ app }) => app.destroy(true, true))
+      cleanUp(async () => {
+        await controller.dispose()
+        pixiApps.forEach(({ app }) => app.destroy())
       })
     },
     [sceneRef, configRef],

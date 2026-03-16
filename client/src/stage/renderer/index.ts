@@ -7,10 +7,10 @@ import { Graphics, Rectangle as PixiRectangle, TilingSprite } from 'pixi.js'
 import { neg, ORIGIN, translate } from 'tapestry-core/src/lib/geometry'
 import { ThemeName } from 'tapestry-core-client/src/theme/themes'
 import { isEqual } from 'lodash-es'
-import { ItemRenderer } from './item-renderer'
+import { EditorItemRenderer } from './item-renderer'
 import { TapestryRenderer } from 'tapestry-core-client/src/stage/renderer'
 import { TapestryStage } from 'tapestry-core-client/src/stage'
-import { isRelViewModel } from 'tapestry-core-client/src/view-model/utils'
+import { isItemViewModel, isRelViewModel } from 'tapestry-core-client/src/view-model/utils'
 import {
   isHoveredElement,
   isHoveredGroup,
@@ -18,6 +18,8 @@ import {
 } from 'tapestry-core-client/src/stage/utils'
 import { idMapToArray } from 'tapestry-core/src/utils'
 import { EditorRelRenderer } from './rel-renderer'
+import { GroupBackgroundRenderer } from 'tapestry-core-client/src/stage/renderer/group-background-renderer'
+import { Selection, TapestryElementRef } from 'tapestry-core-client/src/view-model'
 
 function getResizeCursor({ top, right, bottom, left }: DirectionMask) {
   if ((top && right) || (bottom && left)) {
@@ -49,10 +51,6 @@ export class EditorTapestryRenderer extends TapestryRenderer<EditableTapestryEle
     super(editorStore.as('base'), stage)
   }
 
-  dispose() {
-    super.dispose()
-  }
-
   protected getItems() {
     return idMapToArray(this.editorStore.get('items'))
   }
@@ -66,6 +64,17 @@ export class EditorTapestryRenderer extends TapestryRenderer<EditableTapestryEle
 
     this.renderGuidelines()
     this.renderViewModel(this.editorStore.get('newRelPreview'))
+  }
+
+  protected isSelected(
+    viewModel: EditableTapestryElementViewModel,
+    selection?: Selection,
+    interactiveElement?: TapestryElementRef | null,
+  ): boolean | '' | null | undefined {
+    return (
+      super.isSelected(viewModel, selection, interactiveElement) ||
+      (isRelViewModel(viewModel) && !!viewModel.dragState)
+    )
   }
 
   protected getRenderedTapestryElementIds() {
@@ -84,7 +93,7 @@ export class EditorTapestryRenderer extends TapestryRenderer<EditableTapestryEle
       viewport: { transform },
       interactionMode,
     } = this.editorStore.get()
-    let grid = this.stage.pixi.tapestry.stage.getChildByLabel('grid') as TilingSprite | null
+    let grid = this.stage.pixi.tapestry.app.stage.getChildByLabel('grid') as TilingSprite | null
     if (!guidelines || interactionMode !== 'edit') {
       grid?.destroy()
       this.guidelineGridTextureProps = null
@@ -92,8 +101,8 @@ export class EditorTapestryRenderer extends TapestryRenderer<EditableTapestryEle
     }
 
     if (!grid) {
-      grid = new TilingSprite({ label: 'grid' })
-      this.stage.pixi.tapestry.stage.addChildAt(grid, 0)
+      grid = new TilingSprite({ label: 'grid', eventMode: 'none' })
+      this.stage.pixi.tapestry.app.stage.addChildAt(grid, 0)
     }
 
     const dotRadius = 1 / Math.min(1, transform.scale * 1.5)
@@ -109,7 +118,7 @@ export class EditorTapestryRenderer extends TapestryRenderer<EditableTapestryEle
         // When spacing becomes too large, we need to build huge textures to display the grid.
         // At this point it's better to hide the grid altogether, it isn't useable at this level anyway.
         // We do this by generating a small dummy texture for the tile
-        grid.texture = this.stage.pixi.tapestry.renderer.generateTexture({
+        grid.texture = this.stage.pixi.tapestry.app.renderer.generateTexture({
           target: new Graphics(),
           frame: new PixiRectangle(0, 0, 1, 1),
         })
@@ -117,7 +126,7 @@ export class EditorTapestryRenderer extends TapestryRenderer<EditableTapestryEle
         const tile = new Graphics()
           .circle(dotRadius, dotRadius, dotRadius)
           .fill({ color: this.theme.color('background.inverse'), alpha: 0.25 })
-        grid.texture = this.stage.pixi.tapestry.renderer.generateTexture({
+        grid.texture = this.stage.pixi.tapestry.app.renderer.generateTexture({
           target: tile,
           frame: new PixiRectangle(0, 0, spacing, spacing),
           resolution: 4,
@@ -169,6 +178,10 @@ export class EditorTapestryRenderer extends TapestryRenderer<EditableTapestryEle
       return new EditorRelRenderer(this.editorStore, this.stage, model)
     }
 
-    return new ItemRenderer(this.editorStore, this.stage, model)
+    if (isItemViewModel(model)) {
+      return new EditorItemRenderer(this.editorStore, this.stage, model)
+    }
+
+    return new GroupBackgroundRenderer(this.editorStore.as('base'), this.stage, model)
   }
 }

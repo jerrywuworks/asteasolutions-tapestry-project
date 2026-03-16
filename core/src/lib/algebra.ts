@@ -162,3 +162,11 @@ export function integrate(f: (x: number) => number, from: number, to: number, re
   }
   return sum
 }
+
+export function roundToPrecision(
+  x: number,
+  precision: number,
+  method: 'round' | 'ceil' | 'floor' = 'round',
+) {
+  return Math[method](x / precision) * precision
+}

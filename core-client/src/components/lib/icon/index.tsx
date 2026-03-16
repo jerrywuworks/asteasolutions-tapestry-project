@@ -133,6 +133,7 @@ const ICONS = [
   'videocam',
   'view_sidebar',
   'visibility',
+  'volume_up',
   'wallpaper',
   'wand_stars',
   'wifi_off',

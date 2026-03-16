@@ -1,16 +1,13 @@
 import { Job, Worker } from 'bullmq'
 import { BULLMQ_REDIS_BASE_OPTIONS, JobName, JobTypeMap, QUEUE_NAME } from './index.js'
-import { generateTapestryThumbnail } from './generate-tapestry-thumbnail.js'
+import { generateTapestryThumbnails } from './generate-tapestry-thumbnails.js'
 import { s3Cleanup } from './s3-cleanup.js'
-import { generateItemThumbnail } from './generate-item-thumbnail.js'
 import { createTapestry } from './create-tapestry.js'
 
 async function processTask(job: Job<JobTypeMap[JobName], void, JobName>) {
   switch (job.name) {
-    case 'generate-tapestry-thumbnail':
-      return generateTapestryThumbnail(job.data as JobTypeMap['generate-tapestry-thumbnail'])
-    case 'generate-item-thumbnail':
-      return generateItemThumbnail(job.data as JobTypeMap['generate-item-thumbnail'])
+    case 'generate-tapestry-thumbnails':
+      return generateTapestryThumbnails(job.data as JobTypeMap['generate-tapestry-thumbnails'])
     case 's3-cleanup':
       return s3Cleanup()
     case 'create-tapestry':

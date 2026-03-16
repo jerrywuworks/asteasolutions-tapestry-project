@@ -12,5 +12,8 @@
   "peerDependencies": {
     "lodash-es": "^4.17.21",
     "zod": "3.25.76"
+  },
+  "dependencies": {
+    "mime": "^4.1.0"
   }
 }

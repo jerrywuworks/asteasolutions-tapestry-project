@@ -14,6 +14,7 @@ import { TapestryLifecycleController } from 'tapestry-core-client/src/stage/cont
 import { GlobalEventsController } from 'tapestry-core-client/src/stage/controller/global-events-controller'
 import { ItemController } from 'tapestry-core-client/src/stage/controller/item-controller'
 import { ViewportController } from 'tapestry-core-client/src/stage/controller/viewport-controller'
+import { ItemThumbnailController } from 'tapestry-core-client/src/stage/controller/item-thumbnail-controller'
 import { TapestryRenderer } from 'tapestry-core-client/src/stage/renderer'
 import { idMapToArray } from 'tapestry-core/src/utils'
 import { useTapestryStore } from '../../app'
@@ -32,7 +33,7 @@ export function Tapestry({ onBack }: TapestryProps) {
   const store = useTapestryStore()
 
   useStageInit(sceneRef, {
-    gestureDectorOptions: { scrollGesture: 'pan', dragToPan: store.get('pointerMode') === 'pan' },
+    gestureDetectorOptions: { scrollGesture: 'pan', dragToPan: store.get('pointerMode') === 'pan' },
     createPixiApps: async () => [
       {
         name: 'tapestry',
@@ -44,6 +45,7 @@ export function Tapestry({ onBack }: TapestryProps) {
     lifecycleController: (stage) =>
       new TapestryLifecycleController(store, stage, {
         default: [
+          new ItemThumbnailController(store),
           new ViewportController(store, stage),
           new (class extends TapestryRenderer<TapestryElementViewModel> {
             protected getItems() {

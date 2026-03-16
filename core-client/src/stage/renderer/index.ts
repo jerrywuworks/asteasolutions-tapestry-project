@@ -1,21 +1,27 @@
 import { CSSProperties } from 'react'
 import { TapestryElementRenderer } from './tapestry-element-renderer'
 import { RelRenderer } from './rel-renderer'
-import { ContainerChild, Graphics } from 'pixi.js'
+import { Container, Graphics } from 'pixi.js'
 import { THEMES } from '../../theme/themes'
 import { Store } from '../../lib/store/index'
 import { idMapToArray } from 'tapestry-core/src/utils'
 import {
+  GroupViewModel,
   ItemViewModel,
   PointerInteraction,
   RelViewModel,
+  Selection,
+  TapestryElementRef,
   TapestryElementViewModel,
   TapestryViewModel,
 } from '../../view-model'
 import { TapestryStage } from '..'
 import { TapestryStageController } from '../controller'
-import { isRelViewModel } from '../../view-model/utils'
+import { isItemViewModel, isRelViewModel } from '../../view-model/utils'
 import { isHoveredElement } from '../utils'
+import { ItemRenderer } from './item-renderer'
+import { GroupBackgroundRenderer } from './group-background-renderer'
+import { ThumbnailContainer } from './thumbnail-container'
 
 export interface Renderer<T = unknown> {
   render(arg: T): void
@@ -36,25 +42,36 @@ const SCENE_CURSOR_CLASS = 'scene-cursor'
 const SCENE_CURSOR_VARIABLE = '--scene-cursor'
 
 export abstract class TapestryRenderer<
-  E extends TapestryElementViewModel,
+  E extends TapestryElementViewModel | GroupViewModel,
 > implements TapestryStageController {
-  private tapestryElementRenderers = new Map<string, TapestryElementRenderer<E>>()
+  private tapestryElementRenderers = new Map<string, TapestryElementRenderer<E, object>>()
+
+  private world = new Container()
+  private selected = new Container()
 
   constructor(
     protected store: Store<TapestryViewModel>,
     protected stage: TapestryStage,
-  ) {}
+  ) {
+    this.stage.pixi.tapestry.app.stage.addChild(this.world, this.selected)
+  }
 
   boundRender = this.render.bind(this)
 
-  init() {
+  async init() {
+    await ThumbnailContainer.loadIconTextures()
     this.store.subscribe(this.boundRender)
     this.render()
   }
 
-  dispose() {
+  async dispose() {
     this.store.unsubscribe(this.boundRender)
     this.tapestryElementRenderers.forEach((r) => r.dispose())
+    await ThumbnailContainer.unloadIconTextures()
+  }
+
+  protected getGroups() {
+    return idMapToArray(this.store.get('groups')) as (E & GroupViewModel)[]
   }
 
   protected abstract getItems(): (E & ItemViewModel)[]
@@ -68,20 +85,26 @@ export abstract class TapestryRenderer<
   protected render() {
     this.removeMissingStageItems()
 
-    this.getRels().forEach(this.renderViewModel.bind(this))
-    this.getItems().forEach(this.renderViewModel.bind(this))
+    const selection = this.store.get('selection')
+    const interactiveElement = this.store.get('interactiveElement')
+    this.getGroups().forEach((group) => this.renderViewModel(group, selection, interactiveElement))
+    this.getRels().forEach((rel) => this.renderViewModel(rel, selection, interactiveElement))
+    this.getItems().forEach((item) => this.renderViewModel(item, selection, interactiveElement))
 
     this.renderSelectionRect()
 
-    this.updateItemZOrder()
     this.updateViewportTransformation()
     this.updatePointer()
     this.updateTheme()
+
+    this.stage.pixi.tapestry.scheduleRedraw()
   }
 
   protected renderSelectionRect() {
     const containerId = 'selection-rect'
-    let container = this.stage.pixi.tapestry.stage.getChildByLabel(containerId) as Graphics | null
+    let container = this.stage.pixi.tapestry.app.stage.getChildByLabel(
+      containerId,
+    ) as Graphics | null
     const pointerSelection = this.store.get('pointerSelection')
 
     if (!pointerSelection) {
@@ -91,7 +114,7 @@ export abstract class TapestryRenderer<
 
     if (!container) {
       container = new Graphics({ label: containerId, eventMode: 'none' })
-      this.stage.pixi.tapestry.stage.addChild(container)
+      this.stage.pixi.tapestry.app.stage.addChild(container)
     }
 
     const { left, top, width, height } = pointerSelection.rect
@@ -106,13 +129,13 @@ export abstract class TapestryRenderer<
 
   protected updateTheme() {
     const canvasBackground = this.store.get('background')
-    this.stage.pixi.tapestry.renderer.background.color = canvasBackground
+    this.stage.pixi.tapestry.app.renderer.background.color = canvasBackground
   }
 
   protected updateViewportTransformation() {
     const { translation, scale } = this.store.get('viewport.transform')
-    this.stage.pixi.tapestry.stage.scale = scale
-    this.stage.pixi.tapestry.stage.position = { x: translation.dx, y: translation.dy }
+    this.stage.pixi.tapestry.app.stage.scale = scale
+    this.stage.pixi.tapestry.app.stage.position = { x: translation.dx, y: translation.dy }
   }
 
   protected determineCursorStyle(): CSSProperties['cursor'] | null {
@@ -152,34 +175,11 @@ export abstract class TapestryRenderer<
     }
   }
 
-  protected updateItemZOrder() {
-    const { selection, interactiveElement } = this.store.get()
-    if (selection.itemIds.size === 0 && selection.groupIds.size === 0 && !interactiveElement) return
-
-    const selectedContainerIds = new Set(
-      idMapToArray(this.store.get('items')).map((i) => TapestryElementRenderer.getContainerId(i)),
-    )
-    if (interactiveElement?.modelType === 'rel') {
-      const rel = this.store.get('rels')[interactiveElement.modelId]
-      // TODO: Remove this non-null check when the Store becomes consistent after undo stack updates
-      if (rel) {
-        selectedContainerIds.add(TapestryElementRenderer.getContainerId(rel))
-      }
-    }
-    const pixiContainer = this.stage.pixi.tapestry.stage
-    let firstSelectedIndex = pixiContainer.children.findIndex((child) =>
-      selectedContainerIds.has(child.label),
-    )
-    for (let i = firstSelectedIndex + 1; i < pixiContainer.children.length; i += 1) {
-      const child = pixiContainer.getChildAt<ContainerChild>(i)
-      if (!selectedContainerIds.has(child.label)) {
-        pixiContainer.setChildIndex(child, firstSelectedIndex)
-        firstSelectedIndex += 1
-      }
-    }
-  }
-
-  protected renderViewModel(viewModel?: E | null) {
+  protected renderViewModel(
+    viewModel?: E | null,
+    selection?: Selection,
+    interactiveElement?: TapestryElementRef | null,
+  ) {
     if (!viewModel) {
       return
     }
@@ -192,13 +192,36 @@ export abstract class TapestryRenderer<
       this.tapestryElementRenderers.set(id, renderer)
     }
 
+    const isSelected = this.isSelected(viewModel, selection, interactiveElement)
+
+    const container = isSelected ? this.selected : this.world
+    if (renderer.pixiContainer.parent !== container) {
+      container.addChild(renderer.pixiContainer)
+    }
+
     renderer.render(viewModel)
+  }
+
+  protected isSelected(
+    viewModel: E,
+    selection?: Selection,
+    interactiveElement?: TapestryElementRef | null,
+  ) {
+    return (
+      selection?.itemIds.has(viewModel.dto.id) ||
+      selection?.groupIds.has(viewModel.dto.id) ||
+      interactiveElement?.modelId === viewModel.dto.id ||
+      (isItemViewModel(viewModel) &&
+        viewModel.dto.groupId &&
+        selection?.groupIds.has(viewModel.dto.groupId))
+    )
   }
 
   protected getRenderedTapestryElementIds() {
     return new Set([
-      ...idMapToArray<TapestryElementViewModel>(this.store.get('items'))
+      ...idMapToArray<TapestryElementViewModel | GroupViewModel>(this.store.get('items'))
         .concat(idMapToArray(this.store.get('rels')))
+        .concat(idMapToArray(this.store.get('groups')))
         .map((elem) => TapestryElementRenderer.getContainerId(elem)),
     ])
   }
@@ -214,11 +237,11 @@ export abstract class TapestryRenderer<
     }
   }
 
-  protected createTapestryElementRenderer(model: E): TapestryElementRenderer<E> {
-    if (isRelViewModel(model)) {
-      return new RelRenderer(this.store, this.stage, model)
-    }
-
-    return new (class extends TapestryElementRenderer<E> {})(this.store, this.stage, model)
+  protected createTapestryElementRenderer(model: E): TapestryElementRenderer<E, object> {
+    return isRelViewModel(model)
+      ? new RelRenderer(this.store, this.stage, model)
+      : isItemViewModel(model)
+        ? new ItemRenderer(this.store, this.stage, model)
+        : new GroupBackgroundRenderer(this.store, this.stage, model as E & GroupViewModel)
   }
 }

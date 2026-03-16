@@ -8,26 +8,22 @@ const PERSISTED_KEYS: string[] = []
 
 export async function s3Cleanup() {
   try {
-    const thumbnails = await prisma.tapestry.findMany({
+    const tapestries = await prisma.tapestry.findMany({
       select: { thumbnail: true },
       where: { thumbnail: { not: null } },
     })
     const items = await prisma.item.findMany({
-      select: { source: true, thumbnail: true, customThumbnail: true },
-      where: {
-        OR: [
-          { source: { not: null } },
-          { thumbnail: { not: null } },
-          { customThumbnail: { not: null } },
-        ],
-      },
+      select: { source: true },
+      where: { source: { not: null } },
+    })
+    const imageAssetsRenditions = await prisma.imageAssetRendition.findMany({
+      select: { source: true },
     })
 
     const allS3Keys = new Set([
-      ...thumbnails.map((t) => t.thumbnail!),
+      ...tapestries.map((t) => t.thumbnail!),
+      ...imageAssetsRenditions.map((r) => r.source),
       ...compact(items.map((i) => i.source)),
-      ...compact(items.map((i) => i.thumbnail)),
-      ...compact(items.map((i) => i.customThumbnail)),
       ...PERSISTED_KEYS,
     ])
 

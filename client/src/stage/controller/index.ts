@@ -12,6 +12,7 @@ import { TapestryLifecycleController } from 'tapestry-core-client/src/stage/cont
 import { TapestryStage } from 'tapestry-core-client/src/stage'
 import { ViewportController } from 'tapestry-core-client/src/stage/controller/viewport-controller'
 import { EditorItemController } from './editor-item-controller'
+import { ItemThumbnailController } from 'tapestry-core-client/src/stage/controller/item-thumbnail-controller'
 
 export class EditorLifecycleController extends TapestryLifecycleController<
   EditableTapestryViewModel,
@@ -24,6 +25,7 @@ export class EditorLifecycleController extends TapestryLifecycleController<
   ) {
     super(store, stage, {
       global: [
+        new ItemThumbnailController(store.as('base')),
         new ViewportController(store.as('base'), stage),
         new EditorTapestryRenderer(store, stage),
       ],
@@ -39,17 +41,17 @@ export class EditorLifecycleController extends TapestryLifecycleController<
     })
   }
 
-  init() {
-    super.init()
+  async init() {
+    await super.init()
     this.store.subscribe('presentationOrderState', this.onPresentationOrderStateChange)
   }
 
-  dispose() {
-    super.dispose()
+  async dispose() {
+    await super.dispose()
     this.store.unsubscribe(this.onPresentationOrderStateChange)
   }
 
   private onPresentationOrderStateChange = (state?: PresentationOrderState | null) => {
-    this.enableMode(state ? 'edit-presentation-order' : 'default')
+    void this.enableMode(state ? 'edit-presentation-order' : 'default')
   }
 }

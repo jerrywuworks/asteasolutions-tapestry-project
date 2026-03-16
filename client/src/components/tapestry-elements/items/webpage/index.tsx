@@ -10,7 +10,6 @@ import { SimpleMenuItem } from 'tapestry-core-client/src/components/lib/toolbar'
 import {
   ALLOWED_ORIGINS,
   getPlaybackInterval,
-  WebFrameProps,
   WebpageItemViewer,
   WebpageItemViewerApi,
 } from 'tapestry-core-client/src/components/tapestry/items/webpage/viewer'
@@ -28,12 +27,16 @@ import { PlayableShareMenu, shareMenu } from '../../item-toolbar/share-menu'
 import { useItemToolbar } from '../../item-toolbar/use-item-toolbar'
 import { TapestryItem } from '../tapestry-item'
 import styles from './styles.module.css'
+import {
+  WebFrame,
+  WebFrameSwitchProps,
+} from 'tapestry-core-client/src/components/tapestry/items/webpage/web-frame'
 
 const checkedSources = new Map<string, boolean>()
 
 const PLAYABLE_WEBPAGE_TYPES: WebpageType[] = ['iaAudio', 'iaVideo', 'vimeo', 'youtube']
 
-function Webpage({ src, onLoad, ...props }: WebFrameProps) {
+function Webpage({ src, onLoad, ...props }: WebFrameSwitchProps) {
   const onLoadRef = usePropRef(onLoad)
   const interactionMode = useTapestryData('interactionMode')
   const checkCanFrame = interactionMode === 'edit'
@@ -70,7 +73,7 @@ function Webpage({ src, onLoad, ...props }: WebFrameProps) {
   )
 
   return canFrame ? (
-    <iframe src={src} onLoad={onLoad} {...props} />
+    <WebFrame src={src} onLoad={onLoad} {...props} />
   ) : canFrame === false ? (
     <div className={styles.error}>
       <Icon icon="sentiment_very_dissatisfied" />

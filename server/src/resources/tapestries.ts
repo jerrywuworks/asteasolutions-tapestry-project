@@ -119,14 +119,17 @@ async function orderByInteraction(
   return tapestries
 }
 
-export async function scheduleTapestryThumbnailGeneration(tapestryId: string) {
+export async function scheduleTapestryThumbnailGeneration(
+  tapestryId: string,
+  { skipDelay = false } = {},
+) {
   await queue.remove(tapestryId)
   await queue.add(
-    'generate-tapestry-thumbnail',
+    'generate-tapestry-thumbnails',
     { tapestryId },
     {
       jobId: tapestryId,
-      delay: config.worker.tapestryThumbnailGenerationDelay,
+      delay: skipDelay ? 0 : config.worker.tapestryThumbnailGenerationDelay,
       removeOnComplete: true,
       removeOnFail: true,
     },
@@ -354,6 +357,9 @@ export const tapestries: RESTResourceImpl<Resources['tapestries'], Prisma.Tapest
           where: {
             OR: [{ item: { tapestryId: id } }, { group: { tapestryId: id } }],
           },
+        })
+        await tx.imageAsset.deleteMany({
+          where: { thumbnailForItems: { some: { tapestryId: id } } },
         })
         await tx.tapestry.delete({ where: { id } })
       })

@@ -119,6 +119,18 @@ export class Rectangle {
     )
   }
 
+  static covering(arg: Rectangle | Size, aspectRatio: number) {
+    const container = arg instanceof Rectangle ? arg : new Rectangle(ORIGIN, arg)
+    const targetSize = outerFit({ width: aspectRatio, height: 1 }, container.size)
+    return new Rectangle(
+      {
+        x: container.center.x - targetSize.width / 2,
+        y: container.center.y - targetSize.height / 2,
+      },
+      targetSize,
+    )
+  }
+
   intersects(other: Rectangle) {
     return (
       this.right >= other.left &&
@@ -261,7 +273,7 @@ export function mul(multiplier: number, vector: Vector): Vector {
 }
 
 export function norm(v: Vector) {
-  return Math.sqrt(v.dx * v.dx + v.dy * v.dy)
+  return Math.hypot(v.dx, v.dy)
 }
 
 export function normalize(v: Vector): Vector {

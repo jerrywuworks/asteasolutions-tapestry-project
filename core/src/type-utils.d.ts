@@ -65,4 +65,6 @@ export type RequiredFields<T, K extends keyof T> = T & {
   [P in K]-?: NonNullable<T[P]>
 }
 
+export type WithOptional<T, K extends keyof T> = Omit<T, K> & Pick<Partial<T>, K>
+
 export type ValuesOf<T> = T[keyof T]

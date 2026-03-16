@@ -30,6 +30,7 @@ import {
   MAX_RESTRICTED_SCALE,
   Selection,
   PresentationStepViewModel,
+  GroupViewModel,
 } from './index.js'
 import { THEMES } from '../theme/themes.js'
 import {
@@ -40,7 +41,7 @@ import {
   isItem,
 } from 'tapestry-core/src/utils.js'
 import { Range } from 'tapestry-core/src/lib/algebra.js'
-import { Item, ItemType } from 'tapestry-core/src/data-format/schemas/item.js'
+import { ImageAsset, Item, ItemType } from 'tapestry-core/src/data-format/schemas/item.js'
 import { PresentationStep } from 'tapestry-core/src/data-format/schemas/presentation-step.js'
 import { Tapestry, TapestryElement } from 'tapestry-core/src/data-format/schemas/tapestry.js'
 import { isMobile } from '../lib/user-agent.js'
@@ -112,8 +113,20 @@ export function isItemViewModel<T extends ItemViewModel = ItemViewModel>(
   )
 }
 
-export function getType(viewModel: TapestryElementViewModel): 'rel' | `item:${ItemType}` {
-  return isRelViewModel(viewModel) ? 'rel' : `item:${viewModel.dto.type}`
+export function getType(viewModel: RelViewModel): 'rel'
+export function getType(viewModel: GroupViewModel): 'group'
+export function getType(viewModel: ItemViewModel): `item:${ItemType}`
+export function getType(
+  viewModel: TapestryElementViewModel | GroupViewModel,
+): 'rel' | 'group' | `item:${ItemType}`
+export function getType(
+  viewModel: TapestryElementViewModel | GroupViewModel,
+): 'rel' | 'group' | `item:${ItemType}` {
+  return isRelViewModel(viewModel)
+    ? 'rel'
+    : isItemViewModel(viewModel)
+      ? `item:${viewModel.dto.type}`
+      : 'group'
 }
 
 export function getAnchorCoordinates(item: Item, anchor: Point): Point {
@@ -374,10 +387,11 @@ export function supportsCustomThumbnail(item: Item) {
   )
 }
 
-export function supportsThumbnail(item: Item) {
-  return item.type === 'video' || item.type === 'webpage' || item.type === 'pdf'
-}
-
 export function isBlobURL(str: string) {
   return str.startsWith('blob:')
+}
+
+export function getPrimaryThumbnail(itemOrThumbnail: Item | ImageAsset | undefined | null) {
+  const thumbnail = isItem(itemOrThumbnail) ? itemOrThumbnail.thumbnail : itemOrThumbnail
+  return thumbnail?.renditions.find((r) => r.isPrimary)?.source
 }

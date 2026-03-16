@@ -11,9 +11,8 @@ import {
   midpoint,
 } from 'tapestry-core/src/lib/geometry.js'
 import { Range } from 'tapestry-core/src/lib/algebra.js'
-import { ItemViewModel, Viewport, RelViewModel, RelEndpointName } from './index.js'
-import { computeRestrictedScale } from './utils.js'
-import { IdMap, idMapToArray } from 'tapestry-core/src/utils.js'
+import { ItemViewModel, RelViewModel, RelEndpointName } from './index.js'
+import { IdMap } from 'tapestry-core/src/utils.js'
 import { clamp } from 'lodash-es'
 
 export const REL_ARROWHEAD_SIZES: Record<LineWeight, number> = {
@@ -109,26 +108,25 @@ export function computeCurvePoints({ from, to, controlPointOffsetRange, lineWidt
 
 export function computeRelCurvePoints<R extends RelViewModel>(
   relViewModel: R,
-  viewport: Viewport,
   items: IdMap<ItemViewModel>,
-  getArrowEndpoint = defaultGetArrowEndpoint<R>,
+  getArrowEndpoint = (relViewModel: R, endpoint: 'from' | 'to') =>
+    defaultGetArrowEndpoint(relViewModel, endpoint, items),
   computeAnchoredCurveDirection = defaultComputeAnchoredCurveDirection<R>,
 ): Curve {
-  const scale = computeRestrictedScale(viewport, idMapToArray(items), { min: 1 })
   const { from, to, weight } = relViewModel.dto
   const controlPointOffsetRange: Range = {
-    min: (4 * REL_ARROWHEAD_SIZES[weight]) / scale,
+    min: 4 * REL_ARROWHEAD_SIZES[weight],
     max: 150,
   }
 
   return computeCurvePoints({
     from: {
-      point: getArrowEndpoint(relViewModel, 'from', items),
+      point: getArrowEndpoint(relViewModel, 'from'),
       direction: computeAnchoredCurveDirection(relViewModel, 'from'),
       hasArrow: from.arrowhead === 'none',
     },
     to: {
-      point: getArrowEndpoint(relViewModel, 'to', items),
+      point: getArrowEndpoint(relViewModel, 'to'),
       direction: computeAnchoredCurveDirection(relViewModel, 'to'),
       hasArrow: to.arrowhead === 'none',
     },

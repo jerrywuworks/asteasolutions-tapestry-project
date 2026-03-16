@@ -1,5 +1,5 @@
 import type { ZodType } from 'zod/v4'
-import type { Path } from 'tapestry-core/src/type-utils.js'
+import type { Prev } from 'tapestry-core/src/type-utils.js'
 import {
   EmptyObject,
   IdParam,
@@ -31,7 +31,23 @@ export interface Request<PathParams extends IO = IO, Query extends IO = IO, Body
   body: Body
 }
 
-export type Includes<R> = readonly Path<R>[]
+// This type is very similar to Path<T> except that it skips array indices
+export type Include<R, D extends number = 3> = [D] extends [never]
+  ? never
+  : R extends Date
+    ? never
+    : R extends unknown[]
+      ? Include<R[number], Prev[D]>
+      : R extends object
+        ? {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+            [K in keyof R]-?: R[K] extends Function
+              ? never
+              : `${Extract<K, string>}${'' | `.${Include<R[K], Prev[D]>}`}`
+          }[keyof R]
+        : never
+
+export type Includes<R> = readonly Include<R>[]
 
 export interface Endpoint<
   Method extends HTTPMethod = HTTPMethod,

@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import Color from 'color'
 import 'pixi.js/math-extras'
+import 'pixi.js/ktx2'
 import { memo, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router'
 
@@ -71,23 +72,22 @@ export function Tapestry() {
   const store = useTapestryStore()
   const tapestryDataSyncCommandsRef = usePropRef(useTapestryDataSyncCommands())
   useStageInit(sceneRef, {
-    gestureDectorOptions: { scrollGesture: 'pan', dragToPan: store.get('pointerMode') === 'pan' },
+    gestureDetectorOptions: { scrollGesture: 'pan', dragToPan: store.get('pointerMode') === 'pan' },
     createPixiApps: async () => {
+      const tapestryApp = await createPixiApp(pixiContainerRef.current!, {
+        background: store.get('background'),
+      })
+
       const overlay = new Color(THEMES[store.get('theme')].color('overlay'))
+      const presentationOrderApp = await createPixiApp(presentationOrderContainerRef.current!, {
+        background: overlay.hex(),
+        backgroundAlpha: overlay.alpha(),
+      })
+      presentationOrderApp.app.stage.eventMode = 'static'
+
       return [
-        {
-          name: 'tapestry',
-          app: await createPixiApp(pixiContainerRef.current!, {
-            background: store.get('background'),
-          }),
-        },
-        {
-          name: 'presentationOrder',
-          app: await createPixiApp(presentationOrderContainerRef.current!, {
-            background: overlay.hex(),
-            backgroundAlpha: overlay.alpha(),
-          }),
-        },
+        { name: 'tapestry', app: tapestryApp },
+        { name: 'presentationOrder', app: presentationOrderApp },
       ]
     },
     lifecycleController: (stage) =>

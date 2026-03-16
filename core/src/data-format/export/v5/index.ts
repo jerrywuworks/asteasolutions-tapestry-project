@@ -10,7 +10,8 @@ import {
   TextItemSchema,
 } from '../v4'
 import { HexColorSchema } from '../../schemas/common'
-import { commonItemProps, ThumbnailSchema } from '../../schemas/item'
+import { commonItemProps } from '../../schemas/item'
+import { ThumbnailSchema } from '../v2'
 
 export const ActionButtonItemSchema = z.object({
   ...commonItemProps.base,

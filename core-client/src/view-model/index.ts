@@ -10,6 +10,7 @@ import { PresentationStep } from 'tapestry-core/src/data-format/schemas/presenta
 import { Rel } from 'tapestry-core/src/data-format/schemas/rel.js'
 import { Tapestry } from 'tapestry-core/src/data-format/schemas/tapestry.js'
 import { IdMap } from 'tapestry-core/src/utils.js'
+import { Id } from 'tapestry-core/src/data-format/schemas/common'
 
 export const MAX_SCALE = 4
 export const MIN_RESTRICTED_SCALE = 0.5
@@ -34,7 +35,12 @@ export interface PointerSelection {
 
 export interface TapestryElementRef {
   readonly modelType: 'item' | 'rel'
-  readonly modelId: string
+  readonly modelId: Id
+}
+
+export interface GroupModelRef {
+  readonly modelType: 'group'
+  readonly modelId: Id
 }
 
 interface BaseHoverTarget {
@@ -70,7 +76,9 @@ export interface PointerInteraction {
 
 export interface ItemViewModel<I extends Item = Item> {
   readonly dto: I
+  readonly snapshotId?: string | null
   readonly hasBeenActive?: boolean
+  readonly isPlaying?: boolean
 }
 
 export interface RelViewModel<R extends Rel = Rel> {
@@ -113,7 +121,14 @@ export interface TapestryViewModel<
   readonly pointerSelection?: PointerSelection | null
   readonly interactiveElement?: TapestryElementRef | null
   readonly snackbarData?: SnackbarData
-  readonly delayItemLoad?: boolean
+  /**
+   * Tapestry items can be pre-rendered on the backend and then a tapestry client can display image representations
+   * of tapestry items instead of the actual items as a performance optimization. In some cases these optimizations
+   * may be unwanted - for example if the pre-rendered images for a given tapestry are corrupted or in other specific
+   * scenarios where the DOM representations of the items need to be displayed directly. This flag controls whether
+   * these optimizations are used when displaying the tapestry or not.
+   */
+  readonly disableOptimizations?: boolean
   readonly outlinedItemId?: string
   readonly searchTerm?: string | null
   readonly items: Readonly<IdMap<I>>

@@ -10,11 +10,8 @@ export const BULLMQ_REDIS_BASE_OPTIONS: QueueBaseOptions = {
 }
 
 export interface JobTypeMap {
-  'generate-tapestry-thumbnail': {
+  'generate-tapestry-thumbnails': {
     tapestryId: string
-  }
-  'generate-item-thumbnail': {
-    itemId: string
   }
   's3-cleanup': void
   'create-tapestry': {

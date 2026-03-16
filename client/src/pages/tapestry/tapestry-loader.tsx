@@ -1,6 +1,6 @@
 import { pick } from 'lodash-es'
 import { useEffect, useMemo } from 'react'
-import { Navigate, useNavigate } from 'react-router'
+import { Navigate, useNavigate, useSearchParams } from 'react-router'
 import { useAsync } from 'tapestry-core-client/src/components/lib/hooks/use-async'
 import { useObservable } from 'tapestry-core-client/src/components/lib/hooks/use-observable'
 import { TapestryConfig, TapestryConfigContext } from 'tapestry-core-client/src/components/tapestry'
@@ -43,6 +43,7 @@ function getErrorMessage(error: unknown) {
       return 'Tapestry not found'
     }
   }
+  console.error('Error loading tapestry', error)
   return 'Error loading tapestry'
 }
 
@@ -68,6 +69,7 @@ export interface TapestryLoaderProps {
 export function TapestryLoader({ id, mode }: TapestryLoaderProps) {
   const navigate = useNavigate()
   const tapestryViewPath = useTapestryPath('view')
+  const [searchParams] = useSearchParams()
   const { user } = useObservable(auth)
 
   const config = useMemo(
@@ -118,7 +120,8 @@ export function TapestryLoader({ id, mode }: TapestryLoaderProps) {
         void navigate(tapestryViewPath)
       }
 
-      const dataSync = new TapestryDataSync(id, canEdit ? mode : 'view', userAccess)
+      const deopt = !!searchParams.get('deopt')
+      const dataSync = new TapestryDataSync(id, canEdit ? mode : 'view', userAccess, deopt)
       onCleanup(() => dataSync.dispose())
 
       await dataSync.init(signal)

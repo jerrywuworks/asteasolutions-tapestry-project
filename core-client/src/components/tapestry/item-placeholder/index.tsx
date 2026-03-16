@@ -24,7 +24,13 @@ export function ItemPlaceholder({
     <div style={style} className={clsx(styles.root, classes?.root)}>
       {thumbnailSrc ? (
         <>
-          <img src={thumbnailSrc} className={clsx(styles.thumbnail, classes?.thumbnail)} />
+          <img
+            src={thumbnailSrc}
+            // Images that may be loaded via `fetch` elsewhere must always be loaded with CORS policy "anonymous"
+            // in order to prevent cached CORS header errors in Chrome.
+            crossOrigin="anonymous"
+            className={clsx(styles.thumbnail, classes?.thumbnail)}
+          />
           {thumbnailOverlay}
         </>
       ) : (

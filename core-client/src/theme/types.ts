@@ -67,7 +67,7 @@ export function isOpaque(color: LiteralColor) {
 }
 
 export function getOpaqueColor(color: LiteralColor) {
-  return color.substring(0, 7)
+  return color.substring(0, 7) as LiteralColor
 }
 
 export type TypographyName = DesignSystemElement<'typography', 0>

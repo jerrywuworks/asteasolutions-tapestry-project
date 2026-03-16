@@ -11,10 +11,11 @@ import {
   ImageItemSchema as BaseImageItemSchema,
   WebpageItemSchema as BaseWebpageItemSchema,
 } from 'tapestry-core/src/data-format/schemas/item.js'
-import { IdentifiableSchema } from 'tapestry-core/src/data-format/schemas/common.js'
+import { IdentifiableSchema, SizeSchema } from 'tapestry-core/src/data-format/schemas/common.js'
 
 const readonlyProps = {
   tapestryId: z.string(),
+  scheduledThumbnailProcessing: z.enum(['derive', 'recreate']).nullish(),
 }
 
 // XXX: Zod doesn't support applying "omit" or "partial" directly to a discriminated union for now.
@@ -32,7 +33,17 @@ function constructItemSchemas<P extends Record<string, ZodType>>(
     ...readonlyProps,
     ...itemProps,
   })
-  const createItemProps = omit(itemProps, createOmitProps) as P
+  const itemWriteProps = {
+    ...(itemProps as Omit<P, 'thumbnail'>),
+    thumbnail: z
+      .object({
+        source: z.string(),
+        size: SizeSchema,
+      })
+      .nullish(),
+  }
+  type W = typeof itemWriteProps
+  const createItemProps = omit(itemWriteProps, createOmitProps) as W
   const itemCreateSchema = z.object({
     ...readonlyProps,
     ...createItemProps,
@@ -45,10 +56,10 @@ function constructItemSchemas<P extends Record<string, ZodType>>(
     ...createItemProps,
   })
 
-  const { type, ...otherProps } = itemProps
+  const { type, ...otherProps } = itemWriteProps
   const partialProps = z
     .object({
-      ...(omit(otherProps, createOmitProps) as Omit<P, 'type'>),
+      ...(omit(otherProps, createOmitProps) as Omit<W, 'type'>),
     })
     .partial()
   const itemUpdateSchema = z.object({ ...partialProps.shape, type: type as P['type'] })

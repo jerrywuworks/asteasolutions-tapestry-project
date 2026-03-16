@@ -1,5 +1,5 @@
 import z from 'zod/v4'
-import { HexColorSchema, RectangleSchema } from '../../schemas/common.js'
+import { HexColorSchema, RectangleSchema, SizeSchema } from '../../schemas/common.js'
 import {
   BaseItemSchema as BaseItemSchemaV1,
   TextItemSchema as TextItemSchemaV1,
@@ -12,7 +12,11 @@ import {
   WebpageItemSchema as WebpageItemSchemaV1,
   RelSchema as RelSchemaV1,
 } from '../v1/index.js'
-import { ThumbnailSchema } from '../../schemas/item.js'
+
+export const ThumbnailSchema = z.object({
+  source: z.string(),
+  size: SizeSchema,
+})
 
 const ThumbnailWithTimestampSchema = ThumbnailSchema.extend({
   timestamp: z.string().nullish(),

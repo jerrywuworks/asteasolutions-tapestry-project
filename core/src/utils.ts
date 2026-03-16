@@ -1,15 +1,9 @@
-import z from 'zod/v4'
 import { compact, fromPairs, isEmpty, set, zip } from 'lodash-es'
 import { Id, Identifiable } from './data-format/schemas/common.js'
-import {
-  Item,
-  ItemSchema,
-  MediaItem,
-  MediaItemSchema,
-  ThumbnailSchema,
-} from './data-format/schemas/item.js'
+import { Item, ItemSchema, MediaItem, MediaItemSchema } from './data-format/schemas/item.js'
 import { PresentationStep } from './data-format/schemas/presentation-step.js'
 import { Rel, RelSchema } from './data-format/schemas/rel.js'
+import mime from 'mime'
 
 export function isHTTPURL(str: string | null | undefined): str is `http${string}` {
   if (!str) {
@@ -33,13 +27,6 @@ export function isRel(obj: unknown): obj is Rel {
 
 export function isMediaItem(item: unknown): item is MediaItem {
   return MediaItemSchema.safeParse(item).success
-}
-
-const thumbnailPropSchema = z.object({ thumbnail: ThumbnailSchema }).nullish()
-type ThumbnailProp = z.infer<typeof thumbnailPropSchema>
-
-export function hasThumbnail(item: Item): item is Item & ThumbnailProp {
-  return thumbnailPropSchema.safeParse(item).success
 }
 
 export function fileExtension(name: string): [string, string | undefined] {
@@ -141,4 +128,11 @@ export function getPresentationSequence<P extends PresentationStep>(stepsById: I
 
 export function mapIds<T extends Identifiable, U extends Identifiable>(arr1: T[], arr2: U[]) {
   return fromPairs(zip(arr1, arr2).map(([e1, e2]) => [e1!.id, e2!.id]))
+}
+
+export function determineImageFormat(url: string) {
+  const mimeType = mime.getType(url)
+  if (!mimeType?.startsWith('image/')) return ''
+
+  return mimeType.split('/')[1]
 }

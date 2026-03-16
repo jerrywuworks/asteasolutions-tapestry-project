@@ -9,6 +9,7 @@ import {
 import { StoreMutationCommand } from '../../lib/store/index.js'
 import { isItemInSelection } from '../utils.js'
 import { idMapToArray } from 'tapestry-core/src/utils.js'
+import { Id } from 'tapestry-core/src/data-format/schemas/common.js'
 
 export function setInteractiveElement(
   element: TapestryElementRef | null,
@@ -24,6 +25,17 @@ export function setInteractiveElement(
       }
     }
     model.interactiveElement = element
+  }
+}
+
+export function setItemIsPlaying(
+  id: Id,
+  isPlaying: boolean,
+): StoreMutationCommand<TapestryViewModel> {
+  return (model) => {
+    if (model.items[id]) {
+      model.items[id].isPlaying = isPlaying
+    }
   }
 }
 

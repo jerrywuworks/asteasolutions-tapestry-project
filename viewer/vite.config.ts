@@ -5,6 +5,9 @@ import svgr from 'vite-plugin-svgr'
 
 export default defineConfig({
   plugins: [react(), svgr(), patchCssModules({ generateSourceTypes: true })],
+  build: {
+    assetsInlineLimit: 0,
+  },
   esbuild: {
     target: 'ES2020',
   },

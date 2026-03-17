@@ -36,6 +36,6 @@ aws ssm send-command \
   \"docker stop server && docker rm server\",
   \"docker stop worker && docker rm worker\",
   \"docker run -d $DOCKER_RUN_ENV --pull always --restart=unless-stopped -p 3000:3000 --network tapestries-server --name server $SERVER_TAG_LATEST\",\
-  \"docker run -d $DOCKER_RUN_ENV --pull always --restart=unless-stopped --name worker $WORKER_TAG_LATEST\",\
+  \"docker run -d $DOCKER_RUN_ENV --pull always --restart=unless-stopped --init --name worker $WORKER_TAG_LATEST\",\
   \"docker image prune -f\"\
   ]}"

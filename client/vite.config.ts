@@ -24,6 +24,9 @@ export default defineConfig(({ mode }) => {
         targets: [{ src: pdfWasmDir, dest: '' }],
       }),
     ],
+    build: {
+      assetsInlineLimit: 0,
+    },
     server: {
       hmr: env.HMR === 'true',
       host: '0.0.0.0',

@@ -69,6 +69,7 @@ services:
     build:
       dockerfile: ./Dockerfile.server
       target: worker
+    init: true
     environment:
       <<: *server_env
       PUPPETEER_ARGS: "--no-sandbox,--disable-gpu,--disable-dev-shm-usage"

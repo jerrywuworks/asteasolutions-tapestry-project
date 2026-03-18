@@ -18,7 +18,7 @@ ENTRYPOINT ["npm", "run"]
 CMD ["start:api"]
 
 
-FROM node:24-alpine AS worker
+FROM node:24-alpine3.22 AS worker
 
 RUN apk add --no-cache \
   chromium \

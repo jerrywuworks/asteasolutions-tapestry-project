@@ -8,6 +8,9 @@ import { ThumbnailRenditionOutput } from './index.js'
 import { generateThumbnail } from './image.js'
 import { Page, ScreenshotOptions } from 'puppeteer'
 import { Item } from '@prisma/client'
+import { innerFit } from 'tapestry-core/src/lib/geometry.js'
+
+const MAX_ITEM_SIZE = 2000
 
 // Helper function that wraps Puppeteer's page.evaluate to avoid TS errors for missing browser (DOM) types
 async function pageEval<T extends unknown[], R>(
@@ -23,11 +26,15 @@ async function pageEval<T extends unknown[], R>(
 }
 
 async function takeItemScreenshot(page: Page, item: Item) {
+  const size = innerFit(item, { width: MAX_ITEM_SIZE, height: MAX_ITEM_SIZE })
+  size.width = Math.round(size.width)
+  size.height = Math.round(size.height)
+
   await page.setViewport({
     // The browser window should be larger than the required element size in order to accommodate
     // for the tapestry controls around it.
-    width: item.width + 100,
-    height: item.height + 300,
+    width: size.width + 100,
+    height: size.height + 300,
     deviceScaleFactor: 2,
   })
 
@@ -53,9 +60,12 @@ async function takeItemScreenshot(page: Page, item: Item) {
     const element = await page.waitForSelector(`[data-model-id="${item.id}"]`, { visible: true })
     if (!element) return null
 
+    await pageEval(page, async (window) => {
+      await window.document.fonts.ready
+    })
     const screenshot = await element.screenshot({ type: 'png', omitBackground: true })
     return generateThumbnail(Buffer.from(screenshot), {
-      maxDim: Math.max(item.width, item.height),
+      maxDim: Math.max(size.width, size.height),
       optimizeForText: item.type === 'text' || item.type === 'actionButton',
     })
   } finally {

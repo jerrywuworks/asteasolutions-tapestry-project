@@ -5,6 +5,10 @@ import { randomUUID } from 'node:crypto'
 import { Readable } from 'node:stream'
 import { finished } from 'node:stream/promises'
 import { spawn as nodeSpawn } from 'node:child_process'
+import { ItemType } from 'tapestry-core/src/data-format/schemas/item'
+import { queue } from '.'
+import { prisma } from '../db'
+import { config } from '../config'
 
 export interface DownloadOpts {
   timeoutMs?: number
@@ -80,4 +84,49 @@ export async function spawn(command: string, args: string[], input?: Buffer) {
       proc.stdin!.end(input)
     }
   })
+}
+
+export async function scheduleTapestryThumbnailGeneration(
+  tapestryId: string,
+  { skipDelay = false } = {},
+) {
+  await queue.remove(tapestryId)
+  await queue.add(
+    'generate-tapestry-thumbnails',
+    { tapestryId },
+    {
+      jobId: tapestryId,
+      delay: skipDelay ? 0 : config.worker.tapestryThumbnailGenerationDelay,
+      removeOnComplete: true,
+      removeOnFail: true,
+    },
+  )
+}
+
+interface GenerateThumbnailsOptions {
+  tapestryId?: string
+  ids?: string[]
+  types?: ItemType[]
+  forceRegenerate?: boolean
+}
+
+export async function generateThumbnails({
+  tapestryId,
+  ids,
+  types,
+  forceRegenerate,
+}: GenerateThumbnailsOptions = {}) {
+  const items = await prisma.item.updateManyAndReturn({
+    where: {
+      tapestryId,
+      ...(ids ? { id: { in: ids } } : {}),
+      ...(types ? { type: { in: types } } : {}),
+    },
+    data: { scheduledThumbnailProcessing: forceRegenerate ? 'recreate' : 'derive' },
+    select: { tapestryId: true },
+  })
+
+  for (const id of new Set(items.map((item) => item.tapestryId))) {
+    await scheduleTapestryThumbnailGeneration(id, { skipDelay: true })
+  }
 }

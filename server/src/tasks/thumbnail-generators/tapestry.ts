@@ -30,6 +30,12 @@ async function takeItemScreenshot(page: Page, item: Item) {
   size.width = Math.round(size.width)
   size.height = Math.round(size.height)
 
+  console.log(
+    `Taking screenshot of item ${item.id} with dimensions ${size.width}x${size.height}...`,
+  )
+
+  console.log('> Setting viewport size...')
+
   await page.setViewport({
     // The browser window should be larger than the required element size in order to accommodate
     // for the tapestry controls around it.
@@ -38,6 +44,7 @@ async function takeItemScreenshot(page: Page, item: Item) {
     deviceScaleFactor: 2,
   })
 
+  console.log('> Focusing item...')
   await pageEval(
     page,
     async (window, itemId) => {
@@ -57,18 +64,27 @@ async function takeItemScreenshot(page: Page, item: Item) {
   )
 
   try {
+    console.log('> Waiting for item selector to become visible...')
     const element = await page.waitForSelector(`[data-model-id="${item.id}"]`, { visible: true })
     if (!element) return null
 
+    console.log('> Waiting for fonts...')
     await pageEval(page, async (window) => {
       await window.document.fonts.ready
     })
+
+    console.log('> Taking screenshot...')
     const screenshot = await element.screenshot({ type: 'png', omitBackground: true })
+
+    console.log('> Generating thumbnail from screenshot...')
     return generateThumbnail(Buffer.from(screenshot), {
       maxDim: Math.max(size.width, size.height),
       optimizeForText: item.type === 'text' || item.type === 'actionButton',
     })
+  } catch (error) {
+    console.log('> Error!', error)
   } finally {
+    console.log('> Resetting item visibility.')
     // Revert hidden item visibility
     await pageEval(page, (window) => {
       window.postMessage({ type: 'tapestry:showAllItems' })

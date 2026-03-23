@@ -106,12 +106,12 @@ function TapestryElementLocator({
 }
 
 function getRelBounds(rel: Rel, items: IdMap<ItemViewModel>) {
-  const fromItem = items[rel.from.itemId]!
-  const toItem = items[rel.to.itemId]!
+  const fromItem = items[rel.from.itemId]
+  const toItem = items[rel.to.itemId]
 
   // When from/to items of a rel change, there is an in-between render where the IDs don't match.
   // Once the useTapestryData hook updates the corresponding values, the component will be rerendered.
-  if (fromItem.dto.id !== rel.from.itemId || toItem.dto.id !== rel.to.itemId) {
+  if (fromItem?.dto.id !== rel.from.itemId || toItem?.dto.id !== rel.to.itemId) {
     return null
   }
 

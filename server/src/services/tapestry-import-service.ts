@@ -1,3 +1,5 @@
+import { extname } from 'node:path'
+import mime from 'mime'
 import { isString, sumBy } from 'lodash-es'
 import { prisma } from '../db.js'
 import { generateItemKey, s3Service, tapestryKey } from './s3-service.js'
@@ -20,7 +22,7 @@ import {
 import { Prisma, TapestryCreateJob } from '@prisma/client'
 import { determineWebpageType } from 'tapestry-core/src/web-sources/index.js'
 import { IdMap, idMapToArray, mapIds } from 'tapestry-core/src/utils.js'
-import { fileTypeFromBuffer } from 'file-type'
+import { fileTypeFromBuffer, FileTypeResult } from 'file-type'
 import { Item } from 'tapestry-core/src/data-format/schemas/item.js'
 import { generateItemThumbnailRenditionName } from 'tapestry-shared/src/utils.js'
 import { generateThumbnails } from '../tasks/utils.js'
@@ -311,7 +313,7 @@ export class TapestryImportService {
     }
     const blob = await entry.getData(new BlobWriter())
     const buffer = new Uint8Array(await blob.arrayBuffer())
-    const type = await fileTypeFromBuffer(buffer)
+    const type = await this.determineFileType(entryPath, buffer)
 
     const key = keyGenerator(entry, type?.ext)
     await s3Service.putObject(key, buffer, type?.mime)
@@ -322,5 +324,25 @@ export class TapestryImportService {
       data: { progress: this.progress / this.total },
     })
     return key
+  }
+
+  private async determineFileType(
+    fileName: string,
+    fileContent: Uint8Array,
+  ): Promise<FileTypeResult | undefined> {
+    // Attempt to detect MIME type from file extension
+    const ext = extname(fileName)
+    const mimeType = mime.getType(ext)
+    if (mimeType) return { ext, mime: mimeType }
+
+    // If it doesn't work, attempt to detect type from file content
+    const typeFromContent = await fileTypeFromBuffer(fileContent)
+    return (
+      typeFromContent && {
+        // Preserve the original file extension, if any
+        ext: ext || typeFromContent.ext,
+        mime: typeFromContent.mime,
+      }
+    )
   }
 }

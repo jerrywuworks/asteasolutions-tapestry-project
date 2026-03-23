@@ -42,8 +42,8 @@ export function drawCurve(gfx: Graphics, curve: Curve, part: 'full' | 'head' | '
 
 export interface RelRenderState<R extends RelViewModel> {
   viewModel: R
-  fromItem: ItemViewModel
-  toItem: ItemViewModel
+  fromItem?: ItemViewModel
+  toItem?: ItemViewModel
   isHighlighted: boolean
 }
 
@@ -79,8 +79,8 @@ export class RelRenderer<R extends RelViewModel> extends TapestryElementRenderer
   protected obtainRenderState(viewModel: R, store: Store<TapestryViewModel>): RelRenderState<R> {
     const { id, from, to } = viewModel.dto
     const { items } = store.get()
-    const fromItem = items[from.itemId]!
-    const toItem = items[to.itemId]!
+    const fromItem = items[from.itemId]
+    const toItem = items[to.itemId]
     const isInteractive = id === store.get('interactiveElement.modelId')
     const pointerInteractionTarget = store.get('pointerInteraction.target')
     return {
@@ -107,6 +107,8 @@ export class RelRenderer<R extends RelViewModel> extends TapestryElementRenderer
     this.lineHighlightTo.clear()
     this.fromArrowhead.clear()
     this.toArrowhead.clear()
+
+    if (!state.fromItem || !state.toItem) return
 
     const curve = this.computeRelCurvePoints(state.viewModel, {
       [state.fromItem.dto.id]: state.fromItem,

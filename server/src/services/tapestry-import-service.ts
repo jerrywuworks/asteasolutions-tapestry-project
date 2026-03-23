@@ -23,6 +23,7 @@ import { IdMap, idMapToArray, mapIds } from 'tapestry-core/src/utils.js'
 import { fileTypeFromBuffer } from 'file-type'
 import { Item } from 'tapestry-core/src/data-format/schemas/item.js'
 import { generateItemThumbnailRenditionName } from 'tapestry-shared/src/utils.js'
+import { generateThumbnails } from '../tasks/utils.js'
 
 class ImportError extends BadRequestError {
   constructor(
@@ -91,6 +92,7 @@ export class TapestryImportService {
         throw new ImportError('unrecognized-version')
       }
       const importedTapestryId = await this.importEntries(userId, tapestry)
+      await generateThumbnails({ tapestryId: importedTapestryId })
 
       await prisma.tapestryCreateJob.update({
         where: { id },

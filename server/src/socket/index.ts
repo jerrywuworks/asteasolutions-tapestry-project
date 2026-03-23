@@ -224,7 +224,11 @@ class SocketServer {
     const where = { where: { updatedAt: { gte: asOf } } }
     const dbTapestry = await prisma.tapestry.findUniqueOrThrow({
       where: { id },
-      include: { items: where, rels: where, groups: where },
+      include: {
+        items: { ...where, include: { thumbnail: { include: { renditions: true } } } },
+        rels: where,
+        groups: where,
+      },
     })
     const tapestry = await serialize('Tapestry', dbTapestry)
 
